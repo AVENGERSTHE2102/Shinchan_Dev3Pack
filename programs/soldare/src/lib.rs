@@ -75,6 +75,7 @@ pub mod soldare {
     // ── Instruction: accept_dare ─────────────────────────────────────────────────
     // Called by: recipient (must be a Signer)
     // Effect:    marks the dare as Accepted and records the recipient's pubkey.
+    // PDA seeds: ["dare", creator_pubkey, dare_hash]
     // Emits:     DareAccepted event
     pub fn accept_dare(ctx: Context<AcceptDare>) -> Result<()> {
         let dare = &mut ctx.accounts.dare_account;
@@ -99,7 +100,8 @@ pub mod soldare {
     // Effect:    marks the dare as Approved, records the proof hash,
     //            emits ApprovalEvent (triggers x402 payout), and returns
     //            the SOL bounty collateral to the creator.
-    // Emits:     ApprovalEvent
+    // PDA seeds: ["dare", creator_pubkey, dare_hash]
+    // Emits:     ApprovalEvent (caught by Helius to fire x402 payout)
     pub fn approve_dare(
         ctx: Context<ApproveDare>,
         proof_hash: [u8; 32],
@@ -137,6 +139,7 @@ pub mod soldare {
     // Called by: creator (must be a Signer)
     // Effect:    reclaims the SOL bounty and rent-exempt minimum after expiry.
     //            Closes the DareAccount PDA.
+    // PDA seeds: ["dare", creator_pubkey, dare_hash]
     // Emits:     DareExpired event
     pub fn reclaim(ctx: Context<Reclaim>) -> Result<()> {
         let dare = &mut ctx.accounts.dare_account;
