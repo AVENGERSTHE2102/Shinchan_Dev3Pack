@@ -1,0 +1,200 @@
+
+<style>
+  * { box-sizing: border-box; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.1rem 1.25rem; margin-bottom: 12px; }
+  .hero { background: var(--color-background-primary); border: 2px solid #534AB7; border-radius: var(--border-radius-lg); padding: 1.4rem 1.5rem; margin-bottom: 14px; }
+  .h1 { font-size: 28px; font-weight: 500; margin: 0 0 2px; letter-spacing: -0.5px; }
+  .h2 { font-size: 16px; font-weight: 500; margin: 0 0 8px; }
+  .h3 { font-size: 14px; font-weight: 500; margin: 0 0 6px; }
+  .sub { font-size: 15px; color: var(--color-text-secondary); line-height: 1.55; margin: 0 0 12px; }
+  .ts { font-size: 13px; color: var(--color-text-secondary); line-height: 1.65; margin: 0; }
+  .tp { font-size: 14px; color: var(--color-text-primary); line-height: 1.6; margin: 0; }
+  .tag { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; margin: 2px; }
+  .tg { background: var(--color-background-success); color: var(--color-text-success); }
+  .tp2 { background: #EEEDFE; color: #3C3489; }
+  .tb { background: var(--color-background-info); color: var(--color-text-info); }
+  .to { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .row { display: flex; align-items: flex-start; gap: 10px; margin: 7px 0; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .divider { height: 0.5px; background: var(--color-border-tertiary); margin: 10px 0; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .mval { font-size: 24px; font-weight: 500; }
+  .mlabel { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 2px; }
+  .bar-wrap { width: 100%; height: 5px; background: var(--color-background-tertiary); border-radius: 3px; overflow: hidden; margin: 3px 0 4px; }
+  .bar { height: 100%; border-radius: 3px; }
+  .step { display: grid; grid-template-columns: 85px 1fr; gap: 5px 12px; font-size: 13px; align-items: start; padding: 7px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .step:last-child { border-bottom: none; }
+  .step-t { color: var(--color-text-secondary); font-weight: 500; }
+  .px { display: inline-flex; font-size: 11px; padding: 2px 7px; border-radius: 4px; margin: 1px; }
+  .p1 { background: #EEEDFE; color: #3C3489; }
+  .p2 { background: #E1F5EE; color: #0F6E56; }
+  .p3 { background: #FAEEDA; color: #633806; }
+  .scene { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; margin: 7px 0; font-size: 13px; line-height: 1.65; border-left: 3px solid #534AB7; color: var(--color-text-primary); }
+  .rust { background: var(--color-background-secondary); border-left: 3px solid #534AB7; border-radius: 0 6px 6px 0; padding: 10px 14px; font-family: var(--font-mono); font-size: 12px; color: var(--color-text-primary); margin: 8px 0; line-height: 1.8; }
+  .kw { color: #534AB7; font-weight: 500; }
+  .cm { color: var(--color-text-tertiary); }
+  .flow-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 12px; text-align: center; }
+  .flow-arrow { display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); font-size: 18px; padding: 0 4px; }
+  .flow-row { display: flex; align-items: center; gap: 0; margin: 8px 0; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+  .new-pill { background: #534AB7; color: #fff; }
+  .existing-pill { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+  .arch-cell { flex: 1; }
+</style>
+
+<h2 class="sr-only">SolDare with x402 — dare your friends, pay instantly with the HTTP payment protocol on Solana</h2>
+
+<div style="padding-top:4px;">
+
+<div class="hero">
+  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
+    <div class="h1">SolDare</div>
+    <span style="font-size:13px; color:var(--color-text-secondary); font-style:italic;">dare your friends. pay on-chain. powered by x402.</span>
+  </div>
+  <div class="sub">The first social dare platform where bounties are enforced by an on-chain Anchor program and paid out using the x402 protocol. Dare a friend, attach USDC, share a link — they complete it and claim instantly. No wallet setup needed on their end.</div>
+  <div style="margin-top:10px;">
+    <span class="tag tg">First social app on x402 + Solana</span>
+    <span class="tag tp2">Anchor Rust program</span>
+    <span class="tag tg">x402 for instant payout</span>
+    <span class="tag tb">Non-crypto people get it in 5 seconds</span>
+    <span class="tag to">Viral by design</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="h2">Why x402 makes SolDare 10x better than plain escrow</div>
+  <div class="grid2">
+    <div>
+      <div class="h3" style="color:var(--color-text-secondary); margin-bottom:6px;">Without x402 (plain escrow)</div>
+      <div class="row"><div class="dot" style="background:var(--color-text-tertiary)"></div><div class="ts">Friend must have a Solana wallet to receive bounty</div></div>
+      <div class="row"><div class="dot" style="background:var(--color-text-tertiary)"></div><div class="ts">They need to install Phantom, get devnet SOL for gas</div></div>
+      <div class="row"><div class="dot" style="background:var(--color-text-tertiary)"></div><div class="ts">Manual claim transaction — they need to know what signing means</div></div>
+      <div class="row"><div class="dot" style="background:var(--color-text-tertiary)"></div><div class="ts">Zero people outside crypto will use this</div></div>
+    </div>
+    <div>
+      <div class="h3" style="color:#1D9E75; margin-bottom:6px;">With x402 (what you're building)</div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">Friend opens a URL. That's it. No wallet required to view.</div></div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">Bounty payout is an x402 HTTP response — instant USDC, gasless</div></div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">Submit proof via a form, sign one message, claim fires automatically</div></div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">Normal people can actually use this. That's the entire point.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="h2">The full flow — in plain English</div>
+  <div class="scene">1. <strong style="font-weight:500">Aditya creates a dare</strong> — types "I dare you to cold call a random number and say you won a prize", attaches $2 USDC, gets a shareable link: <code style="font-size:11px; background:var(--color-background-primary); padding:1px 5px; border-radius:3px;">soldare.xyz/d/abc123</code></div>
+  <div class="scene">2. <strong style="font-weight:500">Friend opens the link on their phone</strong> — sees the dare, the bounty amount, and a countdown. No wallet needed to view. Clicks Accept.</div>
+  <div class="scene">3. <strong style="font-weight:500">Friend records/photos the proof</strong> — uploads it or pastes an X/Instagram link. Clicks "I did it".</div>
+  <div class="scene">4. <strong style="font-weight:500">Aditya gets a notification</strong> — sees the proof, clicks "Approve". The x402 server fires a USDC transfer via the Solana x402 facilitator. Friend's wallet gets $2 in under a second.</div>
+  <div class="scene">5. <strong style="font-weight:500">Expired or refused?</strong> Anchor program's <code style="font-size:11px; background:var(--color-background-primary); padding:1px 5px; border-radius:3px;">reclaim</code> instruction fires after 48h. SOL goes back. Automatic. No dispute.</div>
+</div>
+
+<div class="card">
+  <div class="h2">Architecture — what x402 does vs what Anchor does</div>
+  <div class="grid2" style="margin-top:4px;">
+    <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:12px; border-top:3px solid #534AB7;">
+      <div class="h3" style="color:#534AB7;">Anchor program (Rust)</div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts">Holds the dare state on-chain: creator, recipient, bounty, status, deadline</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts">Locks SOL/USDC in a PDA vault when dare is created</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts">Enforces expiry via <code style="font-size:11px;">Clock::get()</code> sysvar</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts">Emits events frontend listens to for real-time UI updates</div></div>
+      <div style="margin-top:8px;"><span class="tag tp2">~200 lines Rust</span><span class="tag tp2">3–4 instructions</span></div>
+    </div>
+    <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:12px; border-top:3px solid #1D9E75;">
+      <div class="h3" style="color:#1D9E75;">x402 layer (TypeScript)</div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">Dare page is an x402-protected route — viewing it costs $0 but claiming the bounty triggers a payment response</div></div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">When creator approves, server sends x402 USDC payout to friend's wallet instantly</div></div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">Uses <code style="font-size:11px;">@x402/next</code> middleware — 5 lines of config</div></div>
+      <div class="row"><div class="dot" style="background:#1D9E75"></div><div class="ts">Coinbase facilitator handles gas — friend doesn't need SOL</div></div>
+      <div style="margin-top:8px;"><span class="tag tg">Gasless for recipient</span><span class="tag tg">npm install done</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="h2">The Anchor program — 4 clean instructions</div>
+  <div class="rust">
+<span class="kw">struct</span> DareAccount {<br>
+&nbsp;&nbsp;creator:&nbsp;&nbsp;&nbsp;Pubkey,&nbsp;&nbsp;&nbsp;<span class="cm">// who sent the dare</span><br>
+&nbsp;&nbsp;recipient: Pubkey,&nbsp;&nbsp;&nbsp;<span class="cm">// who received it (their wallet)</span><br>
+&nbsp;&nbsp;bounty:&nbsp;&nbsp;&nbsp;&nbsp;u64,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// lamports locked in PDA</span><br>
+&nbsp;&nbsp;dare_hash: [u8; 32],&nbsp;<span class="cm">// hash of dare text — immutable proof</span><br>
+&nbsp;&nbsp;expires_at:i64,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// unix timestamp</span><br>
+&nbsp;&nbsp;status:&nbsp;&nbsp;&nbsp;&nbsp;DareStatus,<span class="cm">// Open | Accepted | Done | Expired</span><br>
+}<br><br>
+<span class="cm">// create_dare  → creator deposits SOL into PDA, sets expiry</span><br>
+<span class="cm">// accept_dare  → recipient signs, status = Accepted</span><br>
+<span class="cm">// approve      → creator signs approval → x402 payout fires in frontend</span><br>
+<span class="cm">// reclaim      → after expiry, creator reclaims SOL</span>
+  </div>
+  <p class="ts">The Anchor program is the trust layer. x402 is the payment delivery layer. They work together — one enforces the rules, the other handles the money movement. That architectural split is itself impressive to judges.</p>
+</div>
+
+<div class="card">
+  <div class="h2">15-hour build plan</div>
+  <div class="step"><div class="step-t">H 0–1</div><div class="tp"><span class="px p2">P2 Rust</span> Solana Playground open, DareAccount struct + enum defined. <span class="px p1">P1 UI</span> <code style="font-size:11px;">npx create-solana-dapp --template x402-template</code> — already has x402 wired. Wallet adapter running. <span class="px p3">P3</span> Supabase: dares table for off-chain text + proof URLs.</div></div>
+  <div class="step"><div class="step-t">H 1–5</div><div class="tp"><span class="px p2">P2 Rust</span> Write 4 instructions. <code style="font-size:11px;">create_dare</code> uses system_program CPI to transfer lamports into PDA. <code style="font-size:11px;">reclaim</code> checks <code style="font-size:11px;">Clock::get()?.unix_timestamp > expires_at</code>. Build + local test.</div></div>
+  <div class="step"><div class="step-t">H 5–6</div><div class="tp"><span class="px p2">P2 Rust</span> Deploy to devnet via Playground. Copy Program ID into <code style="font-size:11px;">.env</code>. First on-chain dare created. ✅ Qualification milestone hit.</div></div>
+  <div class="step"><div class="step-t">H 6–9</div><div class="tp"><span class="px p1">P1 UI</span> Create dare form → shareable link page → proof submission UI. <span class="px p3">P3</span> Wire <code style="font-size:11px;">@coral-xyz/anchor</code> client to program. Wire x402 middleware for the approve-and-pay route.</div></div>
+  <div class="step"><div class="step-t">H 9–12</div><div class="tp">Full integration. Create dare on devnet → share link → accept → submit proof → approve → x402 USDC hits recipient wallet. Fix all breakage. This is the critical window.</div></div>
+  <div class="step"><div class="step-t">H 12–14</div><div class="tp">README with program ID, x402 flow diagram, setup instructions. Record 3-min demo video. Deploy to Vercel.</div></div>
+  <div class="step"><div class="step-t">H 14–15</div><div class="tp">Buffer. Polish. Submit. Breathe.</div></div>
+</div>
+
+<div class="card">
+  <div class="h2">Why judges pick this</div>
+  <div class="grid2">
+    <div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">x402 usage is creative</strong> — everyone else built API monetization with x402. You built the first social consumer app. That's the gap nobody filled.</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Two tech layers working together</strong> — Anchor for trust enforcement + x402 for payment delivery is an elegant split. Shows architectural thinking.</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Real demo moment</strong> — dare a judge live. They do it. Money moves. Done.</div></div>
+    </div>
+    <div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Track fit is perfect</strong> — "reimagines how people transact and collaborate" — this is literally a new type of social-financial contract.</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Non-crypto demo</strong> — show your mom. She gets it. "You dare your friend and they get paid if they do it." That's it.</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Viral mechanic built-in</strong> — every dare is a shareable link. Dares get posted on X. The product markets itself.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="h2">Win probability</div>
+  <div class="grid3">
+    <div class="metric">
+      <div class="mlabel">qualification / prize</div>
+      <div class="mval" style="color:#1D9E75">75%</div>
+      <div class="bar-wrap"><div class="bar" style="width:75%; background:#1D9E75"></div></div>
+    </div>
+    <div class="metric">
+      <div class="mlabel">top-5 finish</div>
+      <div class="mval" style="color:#534AB7">55%</div>
+      <div class="bar-wrap"><div class="bar" style="width:55%; background:#534AB7"></div></div>
+    </div>
+    <div class="metric">
+      <div class="mlabel">demo works live</div>
+      <div class="mval" style="color:#1D9E75">85%</div>
+      <div class="bar-wrap"><div class="bar" style="width:85%; background:#1D9E75"></div></div>
+    </div>
+  </div>
+</div>
+
+<div style="background:#EEEDFE; border-radius:var(--border-radius-lg); padding:1rem 1.25rem;">
+  <div class="h2" style="color:#3C3489; margin-bottom:6px;">Tech stack summary</div>
+  <div class="grid2" style="gap:10px;">
+    <div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Rust/Anchor</strong> — DareAccount program, Solana Playground deploy</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">x402-next</strong> — payment middleware, Coinbase facilitator</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Next.js 14</strong> — frontend, x402 template as base</div></div>
+    </div>
+    <div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">@coral-xyz/anchor</strong> — TypeScript client (auto from IDL)</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Supabase</strong> — dare text, proof URLs, notifications</div></div>
+      <div class="row"><div class="dot" style="background:#534AB7"></div><div class="ts"><strong style="font-weight:500">Helius</strong> — RPC + websocket for real-time TX events</div></div>
+    </div>
+  </div>
+</div>
+
+</div>

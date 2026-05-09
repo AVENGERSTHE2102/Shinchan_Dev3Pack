@@ -1,0 +1,416 @@
+
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  .top-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .stat-lbl { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+
+  .team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .member { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 10px 12px; background: var(--color-background-primary); }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-bottom: 8px; }
+  .member-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .member-role { font-size: 11px; color: var(--color-text-secondary); line-height: 1.45; margin-bottom: 6px; }
+  .stack-list { font-size: 10px; color: var(--color-text-tertiary); line-height: 1.55; }
+
+  .section-lbl { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+
+  .phases { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .phase-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-primary); }
+  .phase-hdr { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; user-select: none; border-bottom: 0.5px solid transparent; transition: background .15s; }
+  .phase-hdr:hover { background: var(--color-background-secondary); }
+  .phase-hdr.open { border-bottom-color: var(--color-border-tertiary); }
+  .phase-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .phase-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .phase-time { font-size: 11px; color: var(--color-text-secondary); }
+  .phase-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; flex-shrink: 0; }
+  .chevron { font-size: 14px; color: var(--color-text-tertiary); transition: transform .2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .phase-body { display: none; padding: 4px 0; }
+  .phase-body.open { display: block; }
+
+  .task { display: grid; grid-template-columns: 72px 1fr; gap: 6px 10px; padding: 8px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); align-items: start; }
+  .task:last-child { border-bottom: none; }
+  .badge { display: inline-flex; align-items: center; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; white-space: nowrap; }
+  .task-main { font-size: 12px; color: var(--color-text-primary); line-height: 1.55; }
+  .task-sub { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; margin-top: 3px; }
+
+  .milestone { display: flex; align-items: flex-start; gap: 8px; padding: 7px 14px; font-size: 12px; background: var(--color-background-success); color: var(--color-text-success); border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg); }
+  .ms-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; margin-top: 3px; }
+
+  .code { font-family: var(--font-mono); font-size: 10px; background: var(--color-background-secondary); padding: 1px 5px; border-radius: 3px; color: var(--color-text-primary); }
+
+  .integrations { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .int-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
+  .int-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .int-body { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+
+  .risks { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 10px 14px; margin-bottom: 16px; }
+  .risk { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; font-size: 12px; color: var(--color-text-primary); line-height: 1.5; }
+  .risk-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .risk + .risk { border-top: 0.5px solid var(--color-border-tertiary); }
+
+  .checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .check { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: var(--color-text-primary); line-height: 1.5; }
+
+  .p1-bg { background: #EEEDFE; color: #3C3489; }
+  .p2-bg { background: #E1F5EE; color: #0F6E56; }
+  .p3-bg { background: #FAEEDA; color: #633806; }
+  .p4-bg { background: #FAECE7; color: #993C1D; }
+  .p1-av { background: #EEEDFE; color: #3C3489; }
+  .p2-av { background: #E1F5EE; color: #0F6E56; }
+  .p3-av { background: #FAEEDA; color: #633806; }
+  .p4-av { background: #FAECE7; color: #993C1D; }
+  .p1-top { border-top: 2.5px solid #534AB7; }
+  .p2-top { border-top: 2.5px solid #1D9E75; }
+  .p3-top { border-top: 2.5px solid #BA7517; }
+  .p4-top { border-top: 2.5px solid #D85A30; }
+
+  .tag-crit { background: #FCEBEB; color: #A32D2D; }
+  .tag-ms { background: #EEEDFE; color: #3C3489; }
+  .tag-int { background: #FAEEDA; color: #633806; }
+</style>
+
+<h2 class="sr-only">SolDare complete 4-person 15-hour implementation plan with phases, tasks, integration points, and risk register</h2>
+
+<div style="padding: 4px 0 16px;">
+
+<div class="top-bar">
+  <div class="stat"><div class="stat-val">15h</div><div class="stat-lbl">total time</div></div>
+  <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">people</div></div>
+  <div class="stat"><div class="stat-val">5</div><div class="stat-lbl">phases</div></div>
+  <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">hard milestones</div></div>
+</div>
+
+<div class="section-lbl">Team</div>
+<div class="team">
+  <div class="member p1-top">
+    <div class="avatar p1-av">P1</div>
+    <div class="member-name">Rust dev</div>
+    <div class="member-role">Anchor program + devnet deploy</div>
+    <div class="stack-list">Rust · Anchor · Solana Playground · @coral-xyz/anchor</div>
+  </div>
+  <div class="member p2-top">
+    <div class="avatar p2-av">P2</div>
+    <div class="member-name">Frontend</div>
+    <div class="member-role">Next.js UI, wallet connect, dare flows</div>
+    <div class="stack-list">Next.js 14 · Tailwind · shadcn/ui · wallet-adapter</div>
+  </div>
+  <div class="member p3-top">
+    <div class="avatar p3-av">P3</div>
+    <div class="member-name">x402 + backend</div>
+    <div class="member-role">x402 middleware, payout route, Supabase</div>
+    <div class="stack-list">x402-next · Supabase · Helius webhooks · Node</div>
+  </div>
+  <div class="member p4-top">
+    <div class="avatar p4-av">P4</div>
+    <div class="member-name">Integration + demo</div>
+    <div class="member-role">Wires everything, README, video</div>
+    <div class="stack-list">@coral-xyz/anchor client · Vercel · OBS · git</div>
+  </div>
+</div>
+
+<div class="section-lbl">Timeline</div>
+<div class="phases" id="phases">
+
+  <!-- Phase 0 -->
+  <div class="phase-wrap">
+    <div class="phase-hdr open" onclick="toggle(this)">
+      <div class="phase-dot" style="background:#1D9E75"></div>
+      <div class="phase-title">Phase 0 — Pre-hack setup</div>
+      <div class="phase-time">H 0 → H 1</div>
+      <span class="phase-tag" style="background:#E1F5EE;color:#0F6E56;">all hands</span>
+      <span class="chevron open">&#8964;</span>
+    </div>
+    <div class="phase-body open">
+      <div class="task">
+        <div><span class="badge p1-bg">P1 Rust</span></div>
+        <div>
+          <div class="task-main">Open Solana Playground → new Anchor project → paste <span class="code">lib.rs</span> → request 2 SOL airdrop immediately.</div>
+          <div class="task-sub">Do not skip the airdrop. Devnet rate-limits 1 SOL/request. Get 2 SOL now or stall at H5. Playground URL: beta.solpg.io</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p2-bg">P2 Front</span></div>
+        <div>
+          <div class="task-main">Bootstrap: <span class="code">npx create-solana-dapp --template x402-template</span> → rename to soldare → confirm wallet adapter connects on devnet.</div>
+          <div class="task-sub">The x402 template already has <span class="code">@x402/next</span> middleware wired. Don't overwrite it. Saves ~3h vs blank Next.js.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p3-bg">P3 x402</span></div>
+        <div>
+          <div class="task-main">Supabase: create project → run schema SQL → enable Realtime on dares table. Get devnet USDC from Circle faucet. Register Coinbase CDP account for x402 facilitator API key.</div>
+          <div class="task-sub">CDP registration: developers.coinbase.com. Free tier = 1,000 tx/month. If CDP has a waitlist, set up direct SPL transfer fallback now so H8 isn't blocked.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p4-bg">P4 Integ</span></div>
+        <div>
+          <div class="task-main">Create GitHub repo → push initial scaffold → set up Vercel project linked to repo → add all env vars to Vercel dashboard now.</div>
+          <div class="task-sub">Env vars needed: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_PROGRAM_ID (placeholder), HELIUS_RPC_URL, USDC_MINT, TREASURY_SECRET_KEY. Don't wait until H12 to do this.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 1 -->
+  <div class="phase-wrap">
+    <div class="phase-hdr open" onclick="toggle(this)">
+      <div class="phase-dot" style="background:#534AB7"></div>
+      <div class="phase-title">Phase 1 — Anchor program</div>
+      <div class="phase-time">H 1 → H 5</div>
+      <span class="phase-tag p1-bg">P1 owns</span>
+      <span class="chevron open">&#8964;</span>
+    </div>
+    <div class="phase-body open">
+      <div class="task">
+        <div><span class="badge p1-bg">P1 Rust</span></div>
+        <div>
+          <div class="task-main">H1–2: Define <span class="code">DareAccount</span> struct + <span class="code">DareStatus</span> enum. Verify <span class="code">#[derive(InitSpace)]</span> compiles. Implement <span class="code">create_dare</span> with PDA seeds <span class="code">[b"dare", creator, dare_hash]</span> and <span class="code">system_program::transfer</span> CPI.</div>
+          <div class="task-sub">PDA vault trick: the DareAccount itself IS the vault — lamports transfer directly into the PDA account. No separate vault account needed. Simpler, fewer accounts, less surface area to break.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p1-bg">P1 Rust</span></div>
+        <div>
+          <div class="task-main">H2–4: Implement <span class="code">accept_dare</span>, <span class="code">approve_dare</span>, and <span class="code">reclaim</span>. Each must check <span class="code">Clock::get()?.unix_timestamp</span> vs <span class="code">expires_at</span>. <span class="code">approve_dare</span> emits <span class="code">ApprovalEvent</span> and returns SOL to creator. <span class="code">reclaim</span> uses <span class="code">close = creator</span> to return rent.</div>
+          <div class="task-sub">If Rust compiler is fighting you at H3: strip <span class="code">reclaim</span>, deploy 3-instruction program. Three instructions still qualifies. Add reclaim after the H5 devnet milestone.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p1-bg">P1 Rust</span></div>
+        <div>
+          <div class="task-main">H4–5: Build → fix all compiler errors → deploy to devnet via Playground → copy Program ID → paste into <span class="code">.env</span> everywhere → verify on Solana Explorer.</div>
+          <div class="task-sub">Common error: <span class="code">has_one</span> constraint not matching field name. Check that <span class="code">has_one = creator</span> corresponds to a field literally named <span class="code">creator</span> in the account struct.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p4-bg">P4 Integ</span></div>
+        <div>
+          <div class="task-main">H4: Export IDL from Playground → save as <span class="code">/app/idl/soldare.json</span> → wire into <span class="code">anchor-client.ts</span> → smoke-test <span class="code">getDarePDA()</span> locally.</div>
+          <div class="task-sub">IDL export: Playground sidebar → IDL tab → copy JSON. This is the P1→P4 handoff. Everything downstream depends on this file being correct.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-dot"></div>
+        <span><strong style="font-weight:500">Milestone A (H5):</strong> Program deployed to devnet. Program ID confirmed on Solana Explorer. First <span class="code">create_dare</span> tx visible on-chain. Qualification requirement #1 and #2 done.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase-wrap">
+    <div class="phase-hdr" onclick="toggle(this)">
+      <div class="phase-dot" style="background:#BA7517"></div>
+      <div class="phase-title">Phase 2 — UI + x402 backend</div>
+      <div class="phase-time">H 5 → H 9</div>
+      <span class="phase-tag p2-bg">P2 + P3</span>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="phase-body">
+      <div class="task">
+        <div><span class="badge p2-bg">P2 Front</span></div>
+        <div>
+          <div class="task-main">H5–7: Build the three core pages. (1) <span class="code">/create</span> — dare text + bounty + expiry form, wallet connect, calls <span class="code">createDare()</span>, inserts into Supabase, shows shareable link. (2) <span class="code">/d/[id]</span> — public dare view, accept button. (3) <span class="code">/d/[id]/prove</span> — proof upload form.</div>
+          <div class="task-sub">Shareable link design: <span class="code">soldare.xyz/d/{supabase_uuid}</span>. No wallet needed to VIEW the page — that's the x402 UX win. Show countdown timer, bounty in USDC (not SOL), dare text.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p3-bg">P3 x402</span></div>
+        <div>
+          <div class="task-main">H5–7: Wire <span class="code">@x402/next</span> middleware in <span class="code">middleware.ts</span>. Build <span class="code">/api/dare/payout</span> route — accepts dare_id + recipient + bounty_usdc_cents → sends USDC from treasury wallet → updates Supabase. Build <span class="code">/api/dare/create</span> server action that inserts dare into Supabase.</div>
+          <div class="task-sub">Treasury wallet must hold devnet USDC before H6. Fund it from the Circle faucet. The treasury is the payer for recipient's ATA creation — this is why the recipient never needs SOL (gasless UX).</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p3-bg">P3 x402</span></div>
+        <div>
+          <div class="task-main">H7–8: Set up Helius webhook — devnet, webhook URL = Vercel preview URL, account = Program ID, tx type = any. Implement <span class="code">/api/webhooks/helius</span> to catch <span class="code">ApprovalEvent</span> and trigger the payout route.</div>
+          <div class="task-sub">Fallback if Helius webhook is flaky: after creator signs <span class="code">approve_dare</span> tx, the frontend calls <span class="code">/api/dare/payout</span> directly with dare_id + recipient. Less elegant, still works, still demoes perfectly.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p4-bg">P4 Integ</span></div>
+        <div>
+          <div class="task-main">H6–8: Build <span class="code">useSolDare</span> React hook — wraps all Anchor calls (<span class="code">createDare</span>, <span class="code">acceptDare</span>, <span class="code">approveDare</span>, <span class="code">reclaimDare</span>, <span class="code">fetchDareAccount</span>). P2's buttons call this hook, not raw Anchor directly. Keeps integration surface clean.</div>
+          <div class="task-sub">Critical: P1 freezes the program API at H5 — no instruction signature changes after that. P4 can trust the IDL is stable from H5 onward.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-dot"></div>
+        <span><strong style="font-weight:500">Milestone B (H8):</strong> Create dare form → Supabase insert → on-chain create_dare tx → shareable link generated. All three working together. Not yet E2E, but the create path is done.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase-wrap">
+    <div class="phase-hdr" onclick="toggle(this)">
+      <div class="phase-dot" style="background:#E24B4A"></div>
+      <div class="phase-title">Phase 3 — Full integration</div>
+      <div class="phase-time">H 9 → H 12</div>
+      <span class="phase-tag tag-crit">critical window</span>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="phase-body">
+      <div class="task">
+        <div style="display:flex;flex-direction:column;gap:3px;"><span class="badge p4-bg">P4</span></div>
+        <div>
+          <div class="task-main">H9–10: Run the full E2E path end-to-end: create dare on devnet → copy link → open in incognito (no wallet) → accept → submit proof → approve (creator wallet) → x402 payout fires → USDC hits recipient wallet. Fix everything that breaks.</div>
+          <div class="task-sub">This will break. That's expected. Common failures: IDL mismatch on approve_dare accounts, Supabase RLS blocking reads on the dare page, Helius webhook timing out before payout. Fix sequentially.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p2-bg">P2 Front</span></div>
+        <div>
+          <div class="task-main">H10–11: Add all the states that make it feel real: tx pending spinner, Explorer link after every confirmed tx, error toasts with retry button, Supabase realtime subscription so creator sees proof submission without refreshing.</div>
+          <div class="task-sub">Supabase realtime: <span class="code">supabase.channel('dare:'+id).on('postgres_changes', ...).subscribe()</span>. Show "Proof submitted — waiting for your approval" to the creator in real time.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p3-bg">P3 x402</span></div>
+        <div>
+          <div class="task-main">H10–11: Verify the x402 payout route is idempotent (won't double-pay if called twice). Add <span class="code">if (dare.payout_tx) return cached tx</span> guard. Test with duplicate calls. Add treasury balance check — log a warning if USDC drops below $5 so the demo doesn't fail.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p1-bg">P1 Rust</span></div>
+        <div>
+          <div class="task-main">H10–12: Clean up lib.rs — add comments explaining every constraint, PDA derivation, Clock sysvar, and system_program CPI. This is the code judges will read. Make it obvious you knew what you were doing.</div>
+          <div class="task-sub">Judges look for: meaningful error codes (not just "Unauthorized"), correct use of <span class="code">has_one</span> vs manual key check, PDA bump stored on-chain, no re-derivation in instructions.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-dot"></div>
+        <span><strong style="font-weight:500">Milestone C (H11):</strong> Full end-to-end works. Create → share → accept → prove → approve → USDC hits recipient wallet. All 4 qualification requirements confirmed. This is the target to hit before H12.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase-wrap">
+    <div class="phase-hdr" onclick="toggle(this)">
+      <div class="phase-dot" style="background:#185FA5"></div>
+      <div class="phase-title">Phase 4 — Polish + README + video</div>
+      <div class="phase-time">H 12 → H 14</div>
+      <span class="phase-tag tag-ms">submission prep</span>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="phase-body">
+      <div class="task">
+        <div><span class="badge p4-bg">P4 Integ</span></div>
+        <div>
+          <div class="task-main">H12–13: Write README. Must include: project description, architecture diagram (Anchor trust layer + x402 payment layer), program ID, Vercel URL, setup instructions from zero, env vars table, qualification checklist with checkmarks.</div>
+          <div class="task-sub">README is a judge-facing document. Write it for someone who has never heard of SolDare. The x402 section should explain: "Recipient gets USDC without installing a wallet — the Coinbase facilitator pays their ATA creation fee."</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p4-bg">P4 Integ</span></div>
+        <div>
+          <div class="task-main">H12–14: Record demo video. Script: 30s intro ("SolDare dares your friend to do something — they get paid in USDC if they do it, no wallet setup needed") → 90s live demo with a real devnet dare → 30s architecture split ("Anchor for trust, x402 for payment delivery") → 30s outro. 3 min total.</div>
+          <div class="task-sub">Dry run 3 times before recording. Keep a second funded devnet wallet as the "friend" for the demo — never your dev wallet. Confirm devnet USDC balance before hitting record.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p2-bg">P2 Front</span></div>
+        <div>
+          <div class="task-main">H12–14: Deploy final build to Vercel. Test production URL. Add Solana Explorer link after every on-chain tx. Make sure the dare page renders cleanly on mobile (judges use phones for demos).</div>
+        </div>
+      </div>
+      <div class="task">
+        <div><span class="badge p3-bg">P3 x402</span></div>
+        <div>
+          <div class="task-main">H12–13: Write the README's x402 architecture section. Include the flow diagram: creator approve → ApprovalEvent emitted → Helius catches it → payout route fires → Coinbase facilitator sends USDC → recipient wallet updated → Supabase marked paid.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 5 -->
+  <div class="phase-wrap">
+    <div class="phase-hdr" onclick="toggle(this)">
+      <div class="phase-dot" style="background:#E24B4A"></div>
+      <div class="phase-title">Phase 5 — Buffer + submit</div>
+      <div class="phase-time">H 14 → H 15</div>
+      <span class="phase-tag tag-crit">deadline</span>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="phase-body">
+      <div class="task">
+        <div><span class="badge p4-bg">P4 Integ</span></div>
+        <div>
+          <div class="task-main">H14:00 — fill submission form. Project name, description, GitHub URL, live Vercel URL, video URL (YouTube unlisted), Program ID. Submit at H14:30 at the latest. The last 30 minutes exist only for breakage.</div>
+          <div class="task-sub">Never submit at the deadline. An H15:00 submit with a broken video link = disqualified. H14:30 with 30min of buffer = qualified even if Vercel goes down.</div>
+        </div>
+      </div>
+      <div class="task">
+        <div style="display:flex;flex-direction:column;gap:3px;"><span class="badge p1-bg">P1</span><span class="badge p2-bg">P2</span><span class="badge p3-bg">P3</span></div>
+        <div>
+          <div class="task-main">Final smoke test: devnet dare E2E → confirm Program ID in README matches Solana Explorer → confirm Vercel URL loads → confirm video plays → confirm treasury has USDC for demo during judging.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-dot"></div>
+        <span><strong style="font-weight:500">Milestone D (H14:30):</strong> Submitted. All 4 qualification requirements confirmed green. Treasury funded for live demo during judging.</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /phases -->
+
+<div class="section-lbl">Integration points — where things break</div>
+<div class="integrations">
+  <div class="int-card">
+    <div class="int-title"><i class="ti ti-plug" style="font-size:14px" aria-hidden="true"></i> Anchor IDL → frontend (H5)</div>
+    <div class="int-body">P1 exports IDL from Playground. P4 drops into <span class="code">/app/idl/soldare.json</span>. P1 freezes the instruction API at H5 — no signature changes after this. Biggest risk: IDL mismatch if P1 renames a field. Fix: P4 re-exports and tests immediately after any P1 change.</div>
+  </div>
+  <div class="int-card">
+    <div class="int-title"><i class="ti ti-webhook" style="font-size:14px" aria-hidden="true"></i> Approval event → x402 payout (H8)</div>
+    <div class="int-body">Helius webhook catches <span class="code">ApprovalEvent</span> → calls payout route → USDC sent. Test in isolation before wiring to UI. If Helius is flaky: creator's browser calls payout route directly after approve_dare tx confirms. Fallback is one fetch() call.</div>
+  </div>
+  <div class="int-card">
+    <div class="int-title"><i class="ti ti-database" style="font-size:14px" aria-hidden="true"></i> On-chain ↔ Supabase sync (H7)</div>
+    <div class="int-body">On-chain DareAccount is truth for money. Supabase is truth for content (dare text, proof URL). P4 owns the sync: create_dare tx confirms → P4's hook updates Supabase status. Never derive money state from Supabase alone.</div>
+  </div>
+  <div class="int-card">
+    <div class="int-title"><i class="ti ti-wallet" style="font-size:14px" aria-hidden="true"></i> x402 facilitator config (H0)</div>
+    <div class="int-body">P3 registers with Coinbase CDP at H0. Free tier covers the demo. If CDP has a waitlist, direct SPL transfer is the fallback — same payout route, swap the implementation. Never let facilitator setup block Phase 2.</div>
+  </div>
+</div>
+
+<div class="section-lbl">Risk register</div>
+<div class="risks">
+  <div class="risk"><div class="risk-dot" style="background:#E24B4A"></div><div><strong style="font-weight:500">P1 Rust stuck at H3+</strong> — strip <span class="code">reclaim</span>, deploy 3-instruction program. Still qualifies. P4 handles refund client-side if needed. Don't let one instruction sink the whole program.</div></div>
+  <div class="risk"><div class="risk-dot" style="background:#E24B4A"></div><div><strong style="font-weight:500">x402 facilitator issues at H8+</strong> — switch to direct <span class="code">@solana/spl-token</span> transfer in the payout route. Same UX for recipient (gasless, instant). Mention x402 in README as the intended design. Still impressive.</div></div>
+  <div class="risk"><div class="risk-dot" style="background:#EF9F27"></div><div><strong style="font-weight:500">Devnet airdrop rate limits</strong> — P1 requests 2 SOL at H0. P3 gets devnet USDC from Circle faucet at H0. Fund the treasury wallet at H0. Do not wait until H6.</div></div>
+  <div class="risk"><div class="risk-dot" style="background:#EF9F27"></div><div><strong style="font-weight:500">IDL mismatch after P1 changes</strong> — P1 API freeze at H5. Any changes after that are internal-only (no instruction/account renames). P4 re-exports IDL immediately if P1 must change something before freeze.</div></div>
+  <div class="risk"><div class="risk-dot" style="background:#639922"></div><div><strong style="font-weight:500">Demo SOL/USDC runs out during judging</strong> — P4 keeps a separate funded demo wallet. Never the dev wallet. Check balances at H14:30. Top up if below $5 USDC.</div></div>
+</div>
+
+<div class="section-lbl">Qualification checklist</div>
+<div style="border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 10px 14px;">
+  <div class="checklist">
+    <div class="check"><i class="ti ti-circle-check" style="font-size:15px;color:var(--color-text-success);flex-shrink:0;margin-top:1px" aria-hidden="true"></i><span>Unique Rust/Anchor program — DareAccount, 4 instructions, PDA vault</span></div>
+    <div class="check"><i class="ti ti-circle-check" style="font-size:15px;color:var(--color-text-success);flex-shrink:0;margin-top:1px" aria-hidden="true"></i><span>Deployed to devnet — Program ID confirmed on Solana Explorer</span></div>
+    <div class="check"><i class="ti ti-circle-check" style="font-size:15px;color:var(--color-text-success);flex-shrink:0;margin-top:1px" aria-hidden="true"></i><span>Contract address in README — P4 owns this from H8</span></div>
+    <div class="check"><i class="ti ti-circle-check" style="font-size:15px;color:var(--color-text-success);flex-shrink:0;margin-top:1px" aria-hidden="true"></i><span>Public GitHub + setup instructions — done by P4 throughout</span></div>
+    <div class="check"><i class="ti ti-circle-check" style="font-size:15px;color:var(--color-text-success);flex-shrink:0;margin-top:1px" aria-hidden="true"></i><span>Demo video under 3 mins — recorded at H12–14</span></div>
+    <div class="check"><i class="ti ti-circle-check" style="font-size:15px;color:var(--color-text-success);flex-shrink:0;margin-top:1px" aria-hidden="true"></i><span>Bonus: Anchor + x402 + web3.js + spl-token + Helius SDK usage</span></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function toggle(hdr) {
+  hdr.classList.toggle('open');
+  hdr.querySelector('.chevron').classList.toggle('open');
+  hdr.nextElementSibling.classList.toggle('open');
+}
+</script>
