@@ -7,5 +7,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/dare/payout/:path*',
+  matcher: ['/api/dare/:path*', '/api/webhooks/helius'],
 }
