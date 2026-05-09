@@ -1,34 +1,94 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function DareForm() {
-  const [dareText, setDareText] = useState('');
-  const [bounty, setBounty] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    reward: "",
+    recipient: "",
+    expiry: "",
+  });
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Logic to create dare
-  };
+
+    setLoading(true);
+
+    try {
+      await fetch("/api/dare/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      alert("Dare created successfully");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8"
+    >
       <input
         type="text"
-        placeholder="What's the dare?"
-        value={dareText}
-        onChange={(e) => setDareText(e.target.value)}
-        className="p-2 border rounded"
+        placeholder="Dare title"
+        className="w-full p-4 rounded-xl bg-black/40 border border-white/10"
+        onChange={(e) =>
+          setFormData({ ...formData, title: e.target.value })
+        }
       />
+
+      <textarea
+        placeholder="Describe the challenge"
+        className="w-full p-4 rounded-xl bg-black/40 border border-white/10"
+        rows={5}
+        onChange={(e) =>
+          setFormData({ ...formData, description: e.target.value })
+        }
+      />
+
       <input
         type="number"
-        placeholder="Bounty (SOL)"
-        value={bounty}
-        onChange={(e) => setBounty(Number(e.target.value))}
-        className="p-2 border rounded"
+        placeholder="Reward in USDC"
+        className="w-full p-4 rounded-xl bg-black/40 border border-white/10"
+        onChange={(e) =>
+          setFormData({ ...formData, reward: e.target.value })
+        }
       />
-      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-        Create Dare
+
+      <input
+        type="text"
+        placeholder="Recipient wallet"
+        className="w-full p-4 rounded-xl bg-black/40 border border-white/10"
+        onChange={(e) =>
+          setFormData({ ...formData, recipient: e.target.value })
+        }
+      />
+
+      <input
+        type="date"
+        className="w-full p-4 rounded-xl bg-black/40 border border-white/10"
+        onChange={(e) =>
+          setFormData({ ...formData, expiry: e.target.value })
+        }
+      />
+
+      <button
+        disabled={loading}
+        className="w-full py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-400 transition font-bold"
+      >
+        {loading ? "Creating..." : "Create Dare"}
       </button>
     </form>
   );
