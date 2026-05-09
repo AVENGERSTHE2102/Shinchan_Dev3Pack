@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-soldare = "11111111111111111111111111111111"
+soldare = "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA"
 
 [registry]
 url = "https://api.apr.dev"

@@ -1,14 +1,154 @@
 {
-  "address": "11111111111111111111111111111111",
-  "metadata": {
-    "name": "soldare",
-    "version": "0.1.0",
-    "spec": "0.1.0",
-    "description": "Created with Anchor"
-  },
-  "instructions": [],
-  "accounts": [],
-  "events": [],
-  "errors": [],
-  "types": []
+  "version": "0.1.0",
+  "name": "soldare",
+  "instructions": [
+    {
+      "name": "createDare",
+      "accounts": [
+        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "creator", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "dareHash", "type": { "array": ["u8", 32] } },
+        { "name": "bountyLamports", "type": "u64" },
+        { "name": "expiresInSeconds", "type": "i64" },
+        { "name": "dareId", "type": "string" }
+      ]
+    },
+    {
+      "name": "acceptDare",
+      "accounts": [
+        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "recipient", "isMut": false, "isSigner": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "approveDare",
+      "accounts": [
+        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "creator", "isMut": true, "isSigner": true },
+        { "name": "recipient", "isMut": true, "isSigner": false }
+      ],
+      "args": [{ "name": "proofHash", "type": { "array": ["u8", 32] } }]
+    },
+    {
+      "name": "reclaim",
+      "accounts": [
+        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "creator", "isMut": true, "isSigner": true }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DareAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator", "type": "publicKey" },
+          { "name": "recipient", "type": "publicKey" },
+          { "name": "bounty", "type": "u64" },
+          { "name": "dareHash", "type": { "array": ["u8", 32] } },
+          { "name": "proofHash", "type": { "array": ["u8", 32] } },
+          { "name": "expiresAt", "type": "i64" },
+          { "name": "status", "type": { "defined": "DareStatus" } },
+          { "name": "bump", "type": "u8" },
+          { "name": "dareId", "type": "string" }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "DareStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Open" },
+          { "name": "Accepted" },
+          { "name": "Approved" },
+          { "name": "Expired" }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "DareCreated",
+      "fields": [
+        { "name": "dareId", "type": "string", "index": false },
+        { "name": "creator", "type": "publicKey", "index": false },
+        { "name": "bounty", "type": "u64", "index": false },
+        { "name": "expiresAt", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "DareAccepted",
+      "fields": [
+        { "name": "dareId", "type": "string", "index": false },
+        { "name": "recipient", "type": "publicKey", "index": false }
+      ]
+    },
+    {
+      "name": "ApprovalEvent",
+      "fields": [
+        { "name": "dareId", "type": "string", "index": false },
+        { "name": "recipient", "type": "publicKey", "index": false },
+        { "name": "bountyUsdcCents", "type": "u32", "index": false },
+        { "name": "proofHash", "type": { "array": ["u8", 32] }, "index": false }
+      ]
+    },
+    {
+      "name": "DareExpired",
+      "fields": [
+        { "name": "dareId", "type": "string", "index": false },
+        { "name": "bountyReturned", "type": "u64", "index": false }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BountyTooSmall",
+      "msg": "Bounty must be at least 0.001 SOL (1,000,000 lamports)"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidExpiry",
+      "msg": "Expiry must be between 1 second and 7 days"
+    },
+    {
+      "code": 6002,
+      "name": "DareIdTooLong",
+      "msg": "Dare ID must be 36 characters or fewer (UUID format)"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidStatus",
+      "msg": "Dare is not in the correct status for this instruction"
+    },
+    {
+      "code": 6004,
+      "name": "DareExpired",
+      "msg": "Dare has expired — the deadline has passed"
+    },
+    {
+      "code": 6005,
+      "name": "NotYetExpired",
+      "msg": "Dare has not yet expired — cannot reclaim before deadline"
+    },
+    {
+      "code": 6006,
+      "name": "Unauthorized",
+      "msg": "Only the dare creator can call this instruction"
+    },
+    {
+      "code": 6007,
+      "name": "AlreadyApproved",
+      "msg": "Dare has already been approved and paid out"
+    }
+  ]
 }

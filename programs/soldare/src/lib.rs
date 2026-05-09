@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::system_program;
+use anchor_lang::system_program;
 
-declare_id!("11111111111111111111111111111111"); // Placeholder, update after deployment
+declare_id!("HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA"); // Placeholder, update after deployment
 
 #[program]
 pub mod soldare {
@@ -22,34 +22,27 @@ pub mod soldare {
         dare_id: String,
     ) -> Result<()> {
         // --- Input validation ---
-        require!(
-            bounty_lamports >= 1_000_000,
-            SolDareError::BountyTooSmall
-        ); // min 0.001 SOL — prevents dust spam
+        require!(bounty_lamports >= 1_000_000, SolDareError::BountyTooSmall); // min 0.001 SOL — prevents dust spam
 
         require!(
             expires_in_seconds > 0 && expires_in_seconds <= 604_800,
             SolDareError::InvalidExpiry
         ); // 1 second → 7 days
 
-        require!(
-            dare_id.len() <= 36,
-            SolDareError::DareIdTooLong
-        ); // UUID is exactly 36 chars
+        require!(dare_id.len() <= 36, SolDareError::DareIdTooLong); // UUID is exactly 36 chars
 
         // --- Populate account fields ---
-        let dare = &mut ctx.accounts.dare_account;
         let clock = Clock::get()?;
 
-        dare.creator = ctx.accounts.creator.key();
-        dare.recipient = Pubkey::default(); // zero address until accept_dare
-        dare.bounty = bounty_lamports;
-        dare.dare_hash = dare_hash;
-        dare.proof_hash = [0u8; 32]; // empty until approve_dare
-        dare.expires_at = clock.unix_timestamp + expires_in_seconds;
-        dare.status = DareStatus::Open;
-        dare.dare_id = dare_id.clone();
-        dare.bump = ctx.bumps.dare_account;
+        ctx.accounts.dare_account.creator = ctx.accounts.creator.key();
+        ctx.accounts.dare_account.recipient = Pubkey::default(); // zero address until accept_dare
+        ctx.accounts.dare_account.bounty = bounty_lamports;
+        ctx.accounts.dare_account.dare_hash = dare_hash;
+        ctx.accounts.dare_account.proof_hash = [0u8; 32]; // empty until approve_dare
+        ctx.accounts.dare_account.expires_at = clock.unix_timestamp + expires_in_seconds;
+        ctx.accounts.dare_account.status = DareStatus::Open;
+        ctx.accounts.dare_account.dare_id = dare_id.clone();
+        ctx.accounts.dare_account.bump = ctx.bumps.dare_account;
 
         // --- CPI: transfer SOL from creator into PDA ---
         let cpi_ctx = CpiContext::new(
@@ -64,9 +57,9 @@ pub mod soldare {
         // --- Emit event for Helius webhook ---
         emit!(DareCreated {
             dare_id: dare_id,
-            creator: dare.creator,
+            creator: ctx.accounts.dare_account.creator,
             bounty: bounty_lamports,
-            expires_at: dare.expires_at,
+            expires_at: ctx.accounts.dare_account.expires_at,
         });
 
         Ok(())
@@ -82,7 +75,10 @@ pub mod soldare {
         let clock = Clock::get()?;
 
         require!(dare.status == DareStatus::Open, SolDareError::InvalidStatus);
-        require!(clock.unix_timestamp < dare.expires_at, SolDareError::DareExpired);
+        require!(
+            clock.unix_timestamp < dare.expires_at,
+            SolDareError::DareExpired
+        );
 
         dare.status = DareStatus::Accepted;
         dare.recipient = ctx.accounts.recipient.key();
@@ -102,10 +98,7 @@ pub mod soldare {
     //            the SOL bounty collateral to the creator.
     // PDA seeds: ["dare", creator_pubkey, dare_hash]
     // Emits:     ApprovalEvent (caught by Helius to fire x402 payout)
-    pub fn approve_dare(
-        ctx: Context<ApproveDare>,
-        proof_hash: [u8; 32],
-    ) -> Result<()> {
+    pub fn approve_dare(ctx: Context<ApproveDare>, proof_hash: [u8; 32]) -> Result<()> {
         let dare = &mut ctx.accounts.dare_account;
         let clock = Clock::get()?;
 
@@ -113,7 +106,10 @@ pub mod soldare {
             dare.status == DareStatus::Open || dare.status == DareStatus::Accepted,
             SolDareError::InvalidStatus
         );
-        require!(clock.unix_timestamp < dare.expires_at, SolDareError::DareExpired);
+        require!(
+            clock.unix_timestamp < dare.expires_at,
+            SolDareError::DareExpired
+        );
 
         dare.status = DareStatus::Approved;
         dare.proof_hash = proof_hash;
@@ -130,7 +126,11 @@ pub mod soldare {
         // The actual bounty payment is USDC via x402 — this SOL was collateral.
         let bounty = dare.bounty;
         **dare.to_account_info().try_borrow_mut_lamports()? -= bounty;
-        **ctx.accounts.creator.to_account_info().try_borrow_mut_lamports()? += bounty;
+        **ctx
+            .accounts
+            .creator
+            .to_account_info()
+            .try_borrow_mut_lamports()? += bounty;
 
         Ok(())
     }
@@ -159,7 +159,11 @@ pub mod soldare {
         // Return the locked bounty
         let bounty = dare.bounty;
         **dare.to_account_info().try_borrow_mut_lamports()? -= bounty;
-        **ctx.accounts.creator.to_account_info().try_borrow_mut_lamports()? += bounty;
+        **ctx
+            .accounts
+            .creator
+            .to_account_info()
+            .try_borrow_mut_lamports()? += bounty;
 
         emit!(DareExpired {
             dare_id: dare.dare_id.clone(),
@@ -238,24 +242,24 @@ pub struct Reclaim<'info> {
 #[account]
 #[derive(InitSpace)]
 pub struct DareAccount {
-    pub creator: Pubkey,       // 32 bytes
-    pub recipient: Pubkey,     // 32 bytes — Pubkey::default() until accepted
-    pub bounty: u64,           // 8  bytes — lamports locked in this PDA
-    pub dare_hash: [u8; 32],   // 32 bytes — SHA-256 of dare text
-    pub proof_hash: [u8; 32],  // 32 bytes — SHA-256 of proof, set on approve
-    pub expires_at: i64,       // 8  bytes — unix timestamp
-    pub status: DareStatus,    // 1  byte  — enum
-    pub bump: u8,              // 1  byte  — stored to avoid re-derivation
+    pub creator: Pubkey,      // 32 bytes
+    pub recipient: Pubkey,    // 32 bytes — Pubkey::default() until accepted
+    pub bounty: u64,          // 8  bytes — lamports locked in this PDA
+    pub dare_hash: [u8; 32],  // 32 bytes — SHA-256 of dare text
+    pub proof_hash: [u8; 32], // 32 bytes — SHA-256 of proof, set on approve
+    pub expires_at: i64,      // 8  bytes — unix timestamp
+    pub status: DareStatus,   // 1  byte  — enum
+    pub bump: u8,             // 1  byte  — stored to avoid re-derivation
     #[max_len(36)]
-    pub dare_id: String,       // 4 + 36 = 40 bytes — Supabase UUID
+    pub dare_id: String, // 4 + 36 = 40 bytes — Supabase UUID
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]
 pub enum DareStatus {
-    Open,      // created, not yet accepted
-    Accepted,  // recipient signed accept_dare
-    Approved,  // creator approved proof, x402 payout fired
-    Expired,   // past expires_at without approval
+    Open,     // created, not yet accepted
+    Accepted, // recipient signed accept_dare
+    Approved, // creator approved proof, x402 payout fired
+    Expired,  // past expires_at without approval
 }
 
 #[event]
@@ -274,10 +278,10 @@ pub struct DareAccepted {
 
 #[event]
 pub struct ApprovalEvent {
-    pub dare_id: String,      // P3 uses this to query Supabase row
-    pub recipient: Pubkey,    // P3 sends USDC here
+    pub dare_id: String,        // P3 uses this to query Supabase row
+    pub recipient: Pubkey,      // P3 sends USDC here
     pub bounty_usdc_cents: u32, // P3 uses this as payment amount
-    pub proof_hash: [u8; 32], // audit trail
+    pub proof_hash: [u8; 32],   // audit trail
 }
 
 #[event]
