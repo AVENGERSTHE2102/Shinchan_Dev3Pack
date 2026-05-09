@@ -207,7 +207,6 @@ pub struct ApproveDare<'info> {
         seeds = [b"dare", dare_account.creator.as_ref(), dare_account.dare_hash.as_ref()],
         bump = dare_account.bump,
         has_one = creator @ SolDareError::Unauthorized,
-        close = creator
     )]
     pub dare_account: Account<'info, DareAccount>,
 

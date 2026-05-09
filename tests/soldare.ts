@@ -113,11 +113,12 @@ describe("soldare", () => {
       })
       .rpc();
 
-    // Account should be closed
-    const accountInfo = await provider.connection.getAccountInfo(darePDA);
-    expect(accountInfo).to.be.null;
+    // Account should NOT be closed, status should be Approved
+    const dareAccount = await program.account.dareAccount.fetch(darePDA);
+    expect(dareAccount.status).to.deep.equal({ approved: {} });
+    expect(dareAccount.proofHash).to.deep.equal(Array.from(proofHash));
 
-    // Balance should be returned to creator (minus gas)
+    // Balance should be returned to creator (minus rent for keeping PDA open)
     const creatorBalanceAfter = await provider.connection.getBalance(creator.publicKey);
     expect(creatorBalanceAfter).to.be.greaterThan(creatorBalanceBefore);
   });
