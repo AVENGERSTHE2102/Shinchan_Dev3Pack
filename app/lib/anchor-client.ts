@@ -1,12 +1,20 @@
-// Mock Anchor Client to avoid 'Expected Buffer' errors while preserving UI functionality
+import * as anchor from '@coral-xyz/anchor';
+import { PublicKey } from '@solana/web3.js';
+import idl from '../idl/soldare.json';
+
 export const getProgram = (connection: any, wallet: any) => {
-  console.warn("Anchor Program is currently MOCKED due to Buffer polyfill issues.");
-  return {
-    programId: { toBase58: () => "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA" },
-    methods: {
-      createDare: () => ({ accounts: () => ({ rpc: async () => "MOCKED_TX_CREATE" }) }),
-      acceptDare: () => ({ accounts: () => ({ rpc: async () => "MOCKED_TX_ACCEPT" }) }),
-      approveDare: () => ({ accounts: () => ({ rpc: async () => "MOCKED_TX_APPROVE" }) }),
-    }
-  };
+  if (!wallet || !wallet.publicKey) {
+    throw new Error("Wallet not connected");
+  }
+
+  const provider = new anchor.AnchorProvider(
+    connection,
+    wallet,
+    { preflightCommitment: 'confirmed' }
+  );
+  
+  // Use the address from the IDL or a fallback
+  const programId = new PublicKey(idl.address || "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA");
+  
+  return new anchor.Program(idl as any, provider);
 };

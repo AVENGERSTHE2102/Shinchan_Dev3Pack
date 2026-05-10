@@ -10,9 +10,9 @@
     "app"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=app",
-    "build": "npm run build --workspace=app",
-    "start": "npm run start --workspace=app"
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build",
+    "start": "cd app && npm run start"
   },
   "dependencies": {
     "framer-motion": "^11.1.7"
