@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "overrides": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "workspaces": [
     "app"
@@ -15,6 +15,6 @@
     "start": "npm run start --workspace=app"
   },
   "dependencies": {
-    "framer-motion": "^12.38.0"
+    "framer-motion": "^11.1.7"
   }
 }

@@ -14,6 +14,8 @@ import {
   Share2,
   ExternalLink,
   Zap,
+  Send,
+  Camera
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -33,13 +35,14 @@ const statusColors: any = {
 };
 
 export default function DarePage({ params }: { params: { id: string } }) {
-  const { dare } = useDare(params.id);
+  const { dare, loading: dareLoading, refresh } = useDare(params.id);
   const { acceptDare, approveDare } = useSolDare();
   const { publicKey } = useWallet();
   const { success, error, loading: loadingToast, dismiss } = useToast();
   
   const [loading, setLoading] = useState(false);
   const [statusFlash, setStatusFlash] = useState(false);
+  const [proofUrl, setProofUrl] = useState("");
 
   useEffect(() => {
     if (dare?.status) {
@@ -49,7 +52,7 @@ export default function DarePage({ params }: { params: { id: string } }) {
     }
   }, [dare?.status]);
 
-  if (!dare) {
+  if (dareLoading || !dare) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#050505]">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" />
@@ -61,7 +64,6 @@ export default function DarePage({ params }: { params: { id: string } }) {
   const isRecipient = publicKey?.toBase58() === dare.recipient_wallet;
   const hasExpired = new Date(dare.expires_at) < new Date();
   
-  // Extract dare hash from metadata
   const dareHash = dare.metadata?.dare_hash;
 
   const handleAccept = async () => {
@@ -74,7 +76,6 @@ export default function DarePage({ params }: { params: { id: string } }) {
     try {
       const tx = await acceptDare(dare.creator_wallet, dareHash);
       
-      // Update DB
       await fetch("/api/dare/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,9 +86,39 @@ export default function DarePage({ params }: { params: { id: string } }) {
         }),
       });
 
-      success("Dare accepted! ⚡", "You are now the challenger. Good luck!");
+      await refresh();
+      success("Dare accepted! ⚡", "Now submit your proof below.");
     } catch (err: any) {
       error("Action failed", err.message);
+    } finally {
+      dismiss(tid);
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitProof = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proofUrl) return;
+
+    const tid = loadingToast("Submitting proof...", "Uploading evidence.");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dare/prove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dare_id: dare.id,
+          proof_url: proofUrl,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to submit proof");
+
+      await refresh();
+      success("Proof submitted! 📸", "Waiting for creator approval.");
+      setProofUrl("");
+    } catch (err: any) {
+      error("Submission failed", err.message);
     } finally {
       dismiss(tid);
       setLoading(false);
@@ -102,11 +133,9 @@ export default function DarePage({ params }: { params: { id: string } }) {
     const tid = loadingToast("Approving payout...", "This will release the SOL bounty.");
     setLoading(true);
     try {
-      // Create a dummy proof hash for now
       const dummyProofHash = Array(32).fill(0);
       const tx = await approveDare(dare.creator_wallet, dareHash, dare.recipient_wallet, dummyProofHash);
       
-      // Update DB status to paid
       await fetch("/api/dare/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,6 +147,7 @@ export default function DarePage({ params }: { params: { id: string } }) {
         }),
       });
 
+      await refresh();
       success("Bounty released! 💸", "SOL has been transferred to the recipient.");
     } catch (err: any) {
       error("Approval failed", err.message);
@@ -132,7 +162,6 @@ export default function DarePage({ params }: { params: { id: string } }) {
     success("Link copied!", "Share this dare with others.");
   };
 
-  // Helper to get title/description from metadata or fallback to dare_text
   const title = dare.metadata?.title || dare.dare_text?.split('\n')[0] || "Challenge";
   const description = dare.metadata?.description || dare.dare_text?.split('\n').slice(1).join('\n') || dare.dare_text;
 
@@ -221,78 +250,116 @@ export default function DarePage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            {/* Proof Section */}
-            {dare.proof_url && (
-              <div className="mb-10 rounded-2xl bg-green-500/5 border border-green-500/20 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20 text-green-400">
-                    <CheckCircle className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white">Proof Submitted</h3>
-                </div>
-                <a 
-                  href={dare.proof_url} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="group flex items-center justify-between p-4 rounded-xl bg-black/40 border border-white/5 hover:border-cyan-500/30 transition"
-                >
-                  <span className="text-cyan-400 font-medium truncate mr-4">{dare.proof_url}</span>
-                  <ExternalLink className="h-4 w-4 text-zinc-500 group-hover:text-cyan-400" />
-                </a>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="space-y-4">
+            {/* Actions Section */}
+            <div className="mt-8 pt-8 border-t border-white/5">
               {!publicKey ? (
                 <div className="text-center p-8 rounded-3xl border border-dashed border-white/10 bg-white/5">
-                  <p className="text-zinc-400 mb-6 font-medium">Connect your wallet to interact with this dare</p>
+                  <p className="text-zinc-400 mb-6 font-medium">Connect your wallet to interact</p>
                   <div className="flex justify-center">
                     <PhantomConnectButton />
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
-                  {/* Accept Logic */}
+                <div className="space-y-6">
+                  
+                  {/* 1. Accept Dare */}
                   {dare.status === "created" && !hasExpired && !isCreator && (
                     <button
                       onClick={handleAccept}
                       disabled={loading}
-                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-400 text-black font-black text-xl shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
+                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-400 text-black font-black text-xl shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-[1.02] active:scale-95 transition"
                     >
                       {loading ? "Confirming..." : "⚡ ACCEPT CHALLENGE"}
                     </button>
                   )}
 
-                  {/* Proof Logic */}
+                  {/* 2. Submit Proof (INLINE) */}
                   {dare.status === "accepted" && isRecipient && !hasExpired && (
-                    <Link href={`/d/${dare.id}/prove`}>
-                      <button className="w-full py-5 rounded-2xl bg-gradient-to-r from-purple-600 to-purple-400 text-white font-black text-xl shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:scale-[1.02] active:scale-95 transition">
-                        📸 SUBMIT PROOF
-                      </button>
-                    </Link>
+                    <div className="rounded-3xl bg-purple-500/10 border border-purple-500/20 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="flex items-center gap-3 mb-6">
+                        <Camera className="h-6 w-6 text-purple-400" />
+                        <h3 className="text-xl font-bold">Submit Evidence</h3>
+                      </div>
+                      <form onSubmit={handleSubmitProof} className="space-y-4">
+                        <div className="relative">
+                          <ExternalLink className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                          <input
+                            required
+                            type="url"
+                            placeholder="Link to your proof (X, Loom, etc.)"
+                            className="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:border-purple-500/50 transition"
+                            value={proofUrl}
+                            onChange={(e) => setProofUrl(e.target.value)}
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full py-4 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-600 transition"
+                        >
+                          <Send className="h-4 w-4 inline mr-2" />
+                          {loading ? "Submitting..." : "Send Proof"}
+                        </button>
+                      </form>
+                    </div>
                   )}
 
-                  {/* Approve Logic */}
+                  {/* 3. Approve Payout */}
                   {dare.status === "proof_submitted" && isCreator && (
-                    <button
-                      onClick={handleApprove}
-                      disabled={loading}
-                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-green-500 to-green-400 text-black font-black text-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
-                    >
-                      {loading ? "Processing..." : "✅ APPROVE & PAYOUT"}
-                    </button>
+                    <div className="rounded-3xl bg-green-500/10 border border-green-500/20 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle className="h-6 w-6 text-green-400" />
+                          <h3 className="text-xl font-bold">Proof Received</h3>
+                        </div>
+                        <a 
+                          href={dare.proof_url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-cyan-400 text-sm font-medium flex items-center gap-1 hover:underline"
+                        >
+                          View Evidence <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                      <button
+                        onClick={handleApprove}
+                        disabled={loading}
+                        className="w-full py-5 rounded-2xl bg-gradient-to-r from-green-500 to-green-400 text-black font-black text-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:scale-[1.02] active:scale-95 transition"
+                      >
+                        {loading ? "Releasing SOL..." : "✅ APPROVE & PAYOUT"}
+                      </button>
+                    </div>
                   )}
 
-                  {/* Wait States */}
+                  {/* Display existing proof if not creator (or creator after submission) */}
+                  {dare.proof_url && (!isCreator || dare.status === "paid") && (
+                    <div className="rounded-2xl bg-white/5 border border-white/10 p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-4 w-4 text-green-400" />
+                        <span className="text-sm font-medium">Evidence Submitted</span>
+                      </div>
+                      <a href={dare.proof_url} target="_blank" rel="noreferrer" className="text-cyan-400">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Status Messages */}
                   {dare.status === "created" && isCreator && (
-                    <div className="text-center py-4 text-zinc-500 font-medium italic border-t border-white/5">
+                    <div className="text-center py-4 text-zinc-500 font-medium italic">
                       Waiting for someone to accept the dare...
                     </div>
                   )}
                   {dare.status === "accepted" && isCreator && !dare.proof_url && (
-                    <div className="text-center py-4 text-zinc-500 font-medium italic border-t border-white/5">
-                      Accepted! Waiting for proof submission...
+                    <div className="text-center py-4 text-purple-400 font-medium">
+                      🚀 Dare Accepted! Waiting for challenger to submit proof.
+                    </div>
+                  )}
+                  {dare.status === "paid" && (
+                    <div className="text-center py-8 rounded-3xl bg-green-500/5 border border-green-500/10">
+                      <Trophy className="h-10 w-10 text-green-400 mx-auto mb-3" />
+                      <h3 className="text-xl font-bold text-white">Challenge Completed!</h3>
+                      <p className="text-zinc-500 text-sm mt-1">Bounty has been successfully paid out.</p>
                     </div>
                   )}
                 </div>
