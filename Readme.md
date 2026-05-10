@@ -1,52 +1,239 @@
-# SolDare Documentation Manifest
+# ⚡ SolDare Documentation Hub
 
-Welcome to the SolDare repository. To ensure smooth collaboration between AI agents and human developers, we have structured the documentation into specific files. 
+Welcome to the SolDare repository.
 
-If you are a new agent joining the project, **read this directory first** to understand where everything is:
+SolDare is a decentralized social challenge platform built on Solana where users can create dares, lock crypto rewards, submit proof, and receive automated payouts through smart contracts and x402 infrastructure.
 
-### 🚦 Workflow & Handoffs
-*   **`progress.md`**: **READ THIS FIRST**. The live baton-pass document. It tracks what was just completed, what the immediate next steps are, and exactly who or what is blocking the current phase. You must append to this file when you end your turn.
-*   **`instructions.md`**: The master task list for the Next.js frontend (P2) and x402 backend (P3). It tells incoming agents exactly what files to build next and strict rules to follow (like not touching the frozen Anchor code).
+This documentation system is designed to support both:
 
-### 🧠 Project Context
-*   **`context.md`**: The "Why" behind the project. Explains the vision, the problem with traditional crypto escrows, and how the Anchor + x402 architecture creates a gasless, mainstream UX.
-*   **`project.md`**: The technical blueprint. Contains the tech stack, directory structure, core workflows, and the required `.env` variables needed to run the project.
+* human developers
+* AI coding agents
 
-### 👥 Team & Roles
-*   **`agents.md`**: Defines the 4 roles (P1 Rust, P2 Frontend, P3 Backend, P4 Integration). It establishes the rules of engagement so agents don't overwrite each other's domains.
-
-### 🐛 Testing
-*   **`feedback.md`**: The E2E testing checklist and bug tracker. Use this during the integration phase to log issues, track Vercel/Playground deployment bugs, and review judging criteria.
+Each document has a specific responsibility to reduce overlap, prevent conflicts, and streamline handoffs during rapid development.
 
 ---
-*Note: P1 (Rust/Anchor) is 100% complete. We are currently waiting on P4 to deploy the contract to Devnet to unlock P2 and P3.*
 
-## Vercel Deployment Prerequisites
+# 📚 Documentation Index
 
-For Vercel, configure the project with these assumptions:
+## 🚦 Workflow & Handoffs
 
-1. Set the Vercel Root Directory to `app`.
-2. Use Node `20.x`.
-3. Add all required environment variables in the Vercel project settings:
-   - `NEXT_PUBLIC_SOLANA_NETWORK`
-   - `NEXT_PUBLIC_PROGRAM_ID`
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `HELIUS_API_KEY`
-   - `HELIUS_RPC_URL`
-   - `HELIUS_WEBHOOK_SECRET`
-   - `TREASURY_SECRET_KEY`
-   - `USDC_MINT`
-   - `COINBASE_API_KEY`
-   - `RESEND_API_KEY`
-   - `EMAIL_FROM`
-   - `NEXT_PUBLIC_APP_URL`
-4. Redeploy after updating env vars because API routes and Supabase clients read them at runtime.
+### `progress.md`
 
-Implementation notes already applied in-repo:
-- API routes are pinned to the `nodejs` runtime for Vercel serverless compatibility.
-- Node version is pinned to `20.x` in both workspace manifests.
-- Example env templates exist at `.env.example` and `app/.env.example`.
-- Supabase/env access now fails fast with clearer errors when required values are missing.
-- Email notifications are optional and activate only when `RESEND_API_KEY` and `EMAIL_FROM` are configured.
+**READ THIS FIRST**
+
+The live baton-pass document.
+
+Tracks:
+
+* recently completed work
+* current blockers
+* immediate next steps
+* pending integrations
+* deployment status
+
+Every contributor or agent must append updates before ending their session.
+
+---
+
+### `instructions.md`
+
+The master implementation checklist for:
+
+* P2 Frontend
+* P3 Backend/x402
+
+Contains:
+
+* file-by-file implementation tasks
+* architectural constraints
+* frozen directories that must not be modified
+* integration sequencing
+
+---
+
+# 🧠 Project Context
+
+### `context.md`
+
+Explains:
+
+* the product vision
+* the problem SolDare solves
+* why traditional escrow UX fails
+* how Solana + x402 enable gasless reward experiences
+
+Read this to understand the "why" behind the architecture.
+
+---
+
+### `project.md`
+
+Technical blueprint of the project.
+
+Includes:
+
+* tech stack
+* project structure
+* smart contract workflow
+* API architecture
+* Supabase integration
+* environment variables
+* deployment assumptions
+
+---
+
+# 👥 Team Roles
+
+### `agents.md`
+
+Defines the 4 core implementation domains:
+
+| Role | Responsibility                  |
+| ---- | ------------------------------- |
+| P1   | Rust / Anchor smart contracts   |
+| P2   | Next.js frontend                |
+| P3   | Backend APIs + x402             |
+| P4   | Devnet deployment + integration |
+
+This file prevents overlap and accidental modification of protected domains.
+
+---
+
+# 🐛 Testing & QA
+
+### `feedback.md`
+
+Centralized E2E testing and bug tracking document.
+
+Used for:
+
+* deployment verification
+* integration testing
+* wallet flow testing
+* Supabase debugging
+* Vercel deployment checks
+* hackathon demo readiness
+
+---
+
+# 🔒 Current Project Status
+
+## ✅ P1 — Rust / Anchor
+
+Smart contracts are fully complete.
+
+Implemented:
+
+* `create_dare`
+* `accept_dare`
+* `approve_dare`
+* `reclaim`
+
+Anchor program logic is now frozen unless critical bugs appear.
+
+---
+
+## ⏳ Current Blocker
+
+P4 deployment is pending.
+
+The frontend and backend are currently waiting for:
+
+* Devnet deployment
+* deployed Program ID
+* finalized Anchor IDL export
+
+Once deployed:
+
+* real wallet interactions
+* live transactions
+* proof approval flows
+* automated payouts
+
+can be fully connected.
+
+---
+
+# 🚀 Vercel Deployment Requirements
+
+## Required Configuration
+
+### Root Directory
+
+Set Vercel root directory to:
+
+```text id="6jlwm8"
+app
+```
+
+---
+
+### Node Version
+
+Use:
+
+```text id="hjlwmd"
+20.x
+```
+
+---
+
+# 🔑 Required Environment Variables
+
+```env id="rjlwmy"
+NEXT_PUBLIC_SOLANA_NETWORK=
+NEXT_PUBLIC_PROGRAM_ID=
+
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+HELIUS_API_KEY=
+HELIUS_RPC_URL=
+HELIUS_WEBHOOK_SECRET=
+
+TREASURY_SECRET_KEY=
+USDC_MINT=
+
+COINBASE_API_KEY=
+
+RESEND_API_KEY=
+EMAIL_FROM=
+
+NEXT_PUBLIC_APP_URL=
+```
+
+---
+
+# 🛠️ Deployment Notes
+
+Already implemented in-repo:
+
+* API routes pinned to `nodejs` runtime for Vercel compatibility
+* Node version pinned to `20.x`
+* `.env.example` templates included
+* environment validation with fail-fast behavior
+* optional email notification support through Resend
+
+Email features activate only when:
+
+* `RESEND_API_KEY`
+* `EMAIL_FROM`
+
+are configured.
+
+---
+
+# ⚡ SolDare
+
+### Dare Anything. Earn On-Chain.
+
+Built with:
+
+* Solana
+* Anchor
+* Next.js
+* Supabase
+* x402
+
+And an unreasonable tolerance for JavaScript tooling errors.
