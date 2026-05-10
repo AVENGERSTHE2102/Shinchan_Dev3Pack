@@ -1,56 +1,90 @@
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  sendAndConfirmTransaction,
+  LAMPORTS_PER_SOL,
+} from '@solana/web3.js';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+function required(name: string) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing env var: ${name}`);
+  return value;
+}
+
+function getConnection() {
+  return new Connection(required('HELIUS_RPC_URL'), 'confirmed');
+}
+
+function getTreasury() {
+  const secret = JSON.parse(required('TREASURY_SECRET_KEY')) as number[];
+  return Keypair.fromSecretKey(Uint8Array.from(secret));
+}
+
 /**
- * After approveDare is called on-chain, the smart contract directly
- * transfers the locked SOL from the PDA to the recipient.
- * This function only updates the DB to record the approval and
- * marks the dare as paid (using the on-chain approve_tx as the payout proof).
+ * Payouts SOL to the recipient.
+ * Note: Primary payout is handled on-chain by the approveDare instruction.
+ * This helper can be used for manual or fallback payouts.
  */
 export async function payoutDare(params: {
   dareId: string;
   recipient?: string;
   bountyLamports?: number;
-  approveTx?: string;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
   const { data: dare, error } = await supabaseAdmin
     .from('dares')
-    .select('id,payout_tx,recipient_wallet,bounty_lamports,status')
+    .select('*')
     .eq('id', params.dareId)
     .single();
 
   if (error || !dare) throw new Error('Dare not found');
 
-  // Already paid — idempotent
-  if (dare.payout_tx) {
+  if (dare.status === 'paid' && dare.payout_tx) {
     return {
       payoutTx: dare.payout_tx,
       cached: true,
-      payoutAmountRaw: dare.bounty_lamports?.toString() ?? '0',
+      payoutAmountLamports: dare.bounty_lamports,
     };
   }
 
+  const recipientWallet = params.recipient ?? dare.recipient_wallet;
   const bountyLamports = Number(params.bountyLamports ?? dare.bounty_lamports ?? 0);
-  // The on-chain approveDare tx IS the payout tx (SOL moved directly on-chain)
-  const payoutTx = params.approveTx ?? 'on-chain';
 
-  const { error: updateError } = await supabaseAdmin
+  if (!recipientWallet) throw new Error('Recipient wallet missing');
+  if (bountyLamports <= 0) throw new Error('Invalid bounty amount');
+
+  const connection = getConnection();
+  const treasury = getTreasury();
+  const recipientPk = new PublicKey(recipientWallet);
+
+  const tx = new Transaction().add(
+    SystemProgram.transfer({
+      fromPubkey: treasury.publicKey,
+      toPubkey: recipientPk,
+      lamports: BigInt(bountyLamports),
+    }),
+  );
+
+  const payoutTx = await sendAndConfirmTransaction(connection, tx, [treasury], {
+    commitment: 'confirmed',
+  });
+
+  await supabaseAdmin
     .from('dares')
     .update({
       payout_tx: payoutTx,
-      payout_amount_raw: bountyLamports.toString(),
       status: 'paid',
+      paid_at: new Date().toISOString(),
     })
-    .eq('id', params.dareId)
-    .is('payout_tx', null);
-
-  if (updateError) {
-    console.error(`DB update failed after on-chain payout: ${updateError.message}`);
-  }
+    .eq('id', params.dareId);
 
   return {
     payoutTx,
     cached: false,
-    payoutAmountRaw: bountyLamports.toString(),
+    payoutAmountLamports: bountyLamports,
   };
 }

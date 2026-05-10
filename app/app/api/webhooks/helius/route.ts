@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { payoutDare } from '@/lib/payout';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 type HeliusEvent = {
   description?: string;
@@ -7,9 +7,6 @@ type HeliusEvent = {
   events?: {
     logMessages?: string[];
   };
-  dare_id?: string;
-  recipient?: string;
-  bounty_usdc_cents?: number;
 };
 
 function required(name: string) {
@@ -19,40 +16,20 @@ function required(name: string) {
 }
 
 function parseApprovalFromLogs(logs: string[]) {
-  // Expected format from Anchor log emit helper:
-  // SOLDRARE_APPROVAL::dare_id|recipient_wallet|bounty_usdc_cents
-  const marker = logs.find((line) => line.includes('SOLDRARE_APPROVAL::'));
-  if (!marker) return null;
-  const payload = marker.split('SOLDRARE_APPROVAL::')[1];
-  if (!payload) return null;
-  const [dareId, recipient, centsText] = payload.split('|');
-  const bountyUsdcCents = Number(centsText);
-  if (!dareId || !recipient || !Number.isInteger(bountyUsdcCents) || bountyUsdcCents <= 0) {
-    return null;
-  }
-  return { dareId, recipient, bountyUsdcCents };
-}
-
-function parseApprovalFallback(item: HeliusEvent) {
-  if (item.dare_id) {
-    return {
-      dareId: item.dare_id,
-      recipient: item.recipient,
-      bountyUsdcCents: item.bounty_usdc_cents,
-    };
-  }
-
-  const text = item.description ?? '';
-  const uuidMatch = text.match(
+  // Expected format from Anchor ApprovalEvent emit:
+  // Program log: Instruction: ApproveDare
+  // Program log: ApprovalEvent { dare_id: "...", recipient: "...", bounty_lamports: ... }
+  
+  // We'll look for the dare_id in the logs
+  const dareIdLine = logs.find((line) => line.includes('dare_id'));
+  if (!dareIdLine) return null;
+  
+  const uuidMatch = dareIdLine.match(
     /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i,
   );
+  
   if (!uuidMatch) return null;
-
-  return {
-    dareId: uuidMatch[0],
-    recipient: item.recipient,
-    bountyUsdcCents: item.bounty_usdc_cents,
-  };
+  return { dareId: uuidMatch[0] };
 }
 
 export async function POST(request: Request) {
@@ -63,16 +40,22 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as HeliusEvent[];
+    const supabaseAdmin = getSupabaseAdmin();
+
     for (const item of body) {
       const logs = item.events?.logMessages ?? item.logs ?? [];
-      const parsed = parseApprovalFromLogs(logs) ?? parseApprovalFallback(item);
+      const parsed = parseApprovalFromLogs(logs);
       if (!parsed) continue;
 
-      await payoutDare({
-        dareId: parsed.dareId,
-        recipient: parsed.recipient,
-        bountyUsdcCents: parsed.bountyUsdcCents,
-      });
+      // Sync status to Supabase if it wasn't already updated by the frontend
+      await supabaseAdmin
+        .from('dares')
+        .update({
+          status: 'paid',
+          paid_at: new Date().toISOString(),
+        })
+        .eq('id', parsed.dareId)
+        .is('paid_at', null); // Only update if not already marked paid
     }
 
     return NextResponse.json({ ok: true }, { status: 200 });

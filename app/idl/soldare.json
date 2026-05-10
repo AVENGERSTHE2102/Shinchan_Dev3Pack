@@ -1,25 +1,26 @@
 {
   "version": "0.1.0",
   "name": "soldare",
+  "address": "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA",
   "instructions": [
     {
       "name": "createDare",
       "accounts": [
-        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "dare_account", "isMut": true, "isSigner": false },
         { "name": "creator", "isMut": true, "isSigner": true },
-        { "name": "systemProgram", "isMut": false, "isSigner": false }
+        { "name": "system_program", "isMut": false, "isSigner": false }
       ],
       "args": [
-        { "name": "dareHash", "type": { "array": ["u8", 32] } },
-        { "name": "bountyLamports", "type": "u64" },
-        { "name": "expiresInSeconds", "type": "i64" },
-        { "name": "dareId", "type": "string" }
+        { "name": "dare_hash", "type": { "array": ["u8", 32] } },
+        { "name": "bounty_lamports", "type": "u64" },
+        { "name": "expires_in_seconds", "type": "i64" },
+        { "name": "dare_id", "type": "string" }
       ]
     },
     {
       "name": "acceptDare",
       "accounts": [
-        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "dare_account", "isMut": true, "isSigner": false },
         { "name": "recipient", "isMut": false, "isSigner": true }
       ],
       "args": []
@@ -27,16 +28,16 @@
     {
       "name": "approveDare",
       "accounts": [
-        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "dare_account", "isMut": true, "isSigner": false },
         { "name": "creator", "isMut": true, "isSigner": true },
         { "name": "recipient", "isMut": true, "isSigner": false }
       ],
-      "args": [{ "name": "proofHash", "type": { "array": ["u8", 32] } }]
+      "args": [{ "name": "proof_hash", "type": { "array": ["u8", 32] } }]
     },
     {
       "name": "reclaim",
       "accounts": [
-        { "name": "dareAccount", "isMut": true, "isSigner": false },
+        { "name": "dare_account", "isMut": true, "isSigner": false },
         { "name": "creator", "isMut": true, "isSigner": true }
       ],
       "args": []
@@ -51,12 +52,12 @@
           { "name": "creator", "type": "publicKey" },
           { "name": "recipient", "type": "publicKey" },
           { "name": "bounty", "type": "u64" },
-          { "name": "dareHash", "type": { "array": ["u8", 32] } },
-          { "name": "proofHash", "type": { "array": ["u8", 32] } },
-          { "name": "expiresAt", "type": "i64" },
+          { "name": "dare_hash", "type": { "array": ["u8", 32] } },
+          { "name": "proof_hash", "type": { "array": ["u8", 32] } },
+          { "name": "expires_at", "type": "i64" },
           { "name": "status", "type": { "defined": "DareStatus" } },
           { "name": "bump", "type": "u8" },
-          { "name": "dareId", "type": "string" }
+          { "name": "dare_id", "type": "string" }
         ]
       }
     }
@@ -97,7 +98,7 @@
       "fields": [
         { "name": "dareId", "type": "string", "index": false },
         { "name": "recipient", "type": "publicKey", "index": false },
-        { "name": "bountyUsdcCents", "type": "u32", "index": false },
+        { "name": "bountyLamports", "type": "u64", "index": false },
         { "name": "proofHash", "type": { "array": ["u8", 32] }, "index": false }
       ]
     },

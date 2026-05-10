@@ -2,152 +2,174 @@
 
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useRouter } from "next/navigation";
-import PhantomConnectButton from "./PhantomConnectButton";
-import { useSolDare } from "../hooks/useSolDare";
-import { useToast } from "./Toast";
-import { solToLamports } from "../lib/utils";
+import { useSolDare } from "@/hooks/useSolDare";
+import { useToast } from "@/components/Toast";
+import { solToLamports } from "@/lib/utils";
+import { Coins, Calendar, User, FileText, Zap } from "lucide-react";
 
 export default function DareForm() {
   const { publicKey } = useWallet();
   const { createDare } = useSolDare();
-  const { success, error, loading: toastLoading, dismiss } = useToast();
-  const router = useRouter();
+  const { success, error, loading: loadingToast, dismiss } = useToast();
+  
   const [loading, setLoading] = useState(false);
-
   const [formData, setFormData] = useState({
-    dare_text: "",
-    bounty_sol: "",
-    expires_in_days: "1",
-    recipient_wallet: "",
+    title: "",
+    description: "",
+    reward: "", // In SOL
+    recipient: "",
+    expiry: "",
   });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!publicKey) return error("Wallet not connected", "Connect a supported Solana wallet first.");
+    if (!publicKey) {
+      error("Wallet not connected", "Please connect your wallet to create a dare.");
+      return;
+    }
 
+    const tid = loadingToast("Creating Dare...", "Confirming transaction on-chain.");
     setLoading(true);
-    const tid = toastLoading("Creating dare on-chain...", "Approve the transaction in your wallet");
 
     try {
-      const dareId = crypto.randomUUID();
-      const hashInput = Uint8Array.from(new TextEncoder().encode(formData.dare_text));
-      const hashBuffer = await crypto.subtle.digest("SHA-256", hashInput);
-      const dareHash = Array.from(new Uint8Array(hashBuffer));
-
-      const collateralLamports = solToLamports(parseFloat(formData.bounty_sol));
-      const expiresInSeconds = parseInt(formData.expires_in_days) * 24 * 60 * 60;
-
-      await createDare(dareHash, collateralLamports, expiresInSeconds, dareId);
-
-      const expiresAtDate = new Date();
-      expiresAtDate.setSeconds(expiresAtDate.getSeconds() + expiresInSeconds);
-
+      const bountyLamports = solToLamports(Number(formData.reward));
+      
+      // 1. Create entry in Supabase to get UUID
       const res = await fetch("/api/dare/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: dareId,
-          creator_wallet: publicKey.toString(),
-          recipient_wallet: formData.recipient_wallet || undefined,
-          dare_text: formData.dare_text,
-          bounty_lamports: collateralLamports,
-          expires_at: expiresAtDate.toISOString(),
+          creator_wallet: publicKey.toBase58(),
+          recipient_wallet: formData.recipient || null,
+          title: formData.title,
+          description: formData.description,
+          bounty_lamports: bountyLamports,
+          expires_at: new Date(formData.expiry).toISOString(),
         }),
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null);
-        throw new Error(errData?.error || "Failed to save dare to database");
-      }
+      const dbData = await res.json();
+      if (!res.ok) throw new Error(dbData.error || "Failed to create dare in database");
 
-      dismiss(tid);
-      success("Dare created! 🎉", "Your dare is live on Solana. Redirecting...");
-      setTimeout(() => router.push(`/d/${dareId}`), 1000);
+      const dareId = dbData.id;
+      
+      // 2. On-chain transaction
+      // For the dareHash, we'll use a dummy for now or hash the title
+      const dummyHash = Array(32).fill(0);
+      await createDare(dareId, bountyLamports, dummyHash);
+
+      success("Dare Created! ⚡", "Your challenge is live and bounty is escrowed.");
+      
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        reward: "",
+        recipient: "",
+        expiry: "",
+      });
     } catch (err: any) {
-      dismiss(tid);
-      console.error(err);
-      error("Failed to create dare", err.message);
+      error("Creation failed", err.message);
     } finally {
+      dismiss(tid);
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {!publicKey && (
-        <div className="mb-2 rounded-[28px] border border-cyan-400/15 bg-cyan-400/[0.08] p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-white">Connect a wallet to fund the dare</p>
-              <p className="mt-1 text-xs text-cyan-50/70">
-                Phantom is preferred, but Solflare is supported for quick switching during testing.
-              </p>
-            </div>
-            <PhantomConnectButton className="sm:min-w-[14rem]" />
-          </div>
-        </div>
-      )}
-
-      <textarea
-        placeholder="Describe the challenge (e.g., Do 100 pushups in under 2 minutes)"
-        className="w-full p-4 rounded-xl bg-black/40 border border-white/10 focus:border-cyan-500 focus:outline-none transition resize-none text-sm"
-        rows={4}
-        required
-        value={formData.dare_text}
-        onChange={(e) => setFormData({ ...formData, dare_text: e.target.value })}
-      />
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1.5 font-medium">Reward (SOL)</label>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Title */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Challenge Title</label>
+        <div className="relative">
+          <Zap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
           <input
-            type="number"
-            placeholder="e.g. 0.5"
             required
-            min="0.001"
-            step="0.001"
-            className="w-full p-4 rounded-xl bg-black/40 border border-white/10 focus:border-cyan-500 focus:outline-none transition text-sm"
-            value={formData.bounty_sol}
-            onChange={(e) => setFormData({ ...formData, bounty_sol: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1.5 font-medium">Expires (Days)</label>
-          <input
-            type="number"
-            placeholder="1–7"
-            required
-            min="1"
-            max="7"
-            className="w-full p-4 rounded-xl bg-black/40 border border-white/10 focus:border-cyan-500 focus:outline-none transition text-sm"
-            value={formData.expires_in_days}
-            onChange={(e) => setFormData({ ...formData, expires_in_days: e.target.value })}
+            type="text"
+            placeholder="e.g. Build a 100x memecoin"
+            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-cyan-500/50 focus:ring-0 transition"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs text-zinc-500 mb-1.5 font-medium">Recipient Wallet (Optional)</label>
-        <input
-          type="text"
-          placeholder="Leave blank for anyone to accept"
-          className="w-full p-4 rounded-xl bg-black/40 border border-white/10 focus:border-cyan-500 focus:outline-none transition text-sm"
-          value={formData.recipient_wallet}
-          onChange={(e) => setFormData({ ...formData, recipient_wallet: e.target.value })}
-        />
+      {/* Description */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Description & Requirements</label>
+        <div className="relative">
+          <FileText className="absolute left-4 top-4 h-5 w-5 text-zinc-500" />
+          <textarea
+            required
+            placeholder="Describe exactly what needs to be done..."
+            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-cyan-500/50 focus:ring-0 transition min-h-[120px]"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Reward */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Bounty (SOL)</label>
+          <div className="relative">
+            <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-400" />
+            <input
+              required
+              type="number"
+              step="0.01"
+              placeholder="0.5"
+              className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-bold focus:border-cyan-500/50 focus:ring-0 transition"
+              value={formData.reward}
+              onChange={(e) => setFormData({ ...formData, reward: e.target.value })}
+            />
+          </div>
+        </div>
+
+        {/* Expiry */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Expires On</label>
+          <div className="relative">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+            <input
+              required
+              type="date"
+              className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-cyan-500/50 focus:ring-0 transition"
+              value={formData.expiry}
+              onChange={(e) => setFormData({ ...formData, expiry: e.target.value })}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Recipient (Optional) */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Target Recipient (Optional)</label>
+        <div className="relative">
+          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+          <input
+            type="text"
+            placeholder="Wallet Address (leave blank for public dare)"
+            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-mono text-sm focus:border-cyan-500/50 focus:ring-0 transition"
+            value={formData.recipient}
+            onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
+          />
+        </div>
       </div>
 
       <button
-        disabled={loading || !publicKey}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 hover:scale-[1.02] active:scale-95 transition font-bold text-sm disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+        type="submit"
+        disabled={loading}
+        className="w-full py-5 mt-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-black text-xl shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
       >
-        {loading ? "Creating on-chain..." : "Lock SOL & Create Dare"}
+        {loading ? "PROCESSING..." : "LAUNCH DARE 🚀"}
       </button>
 
       {!publicKey && (
-        <p className="text-center text-xs text-zinc-500">Connect a wallet before creating the on-chain escrow</p>
+        <p className="text-center text-xs text-red-400 font-bold animate-pulse">
+          Connect your wallet to launch the dare!
+        </p>
       )}
     </form>
   );

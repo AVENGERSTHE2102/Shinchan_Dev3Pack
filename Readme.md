@@ -39,6 +39,9 @@ For Vercel, configure the project with these assumptions:
    - `TREASURY_SECRET_KEY`
    - `USDC_MINT`
    - `COINBASE_API_KEY`
+   - `RESEND_API_KEY`
+   - `EMAIL_FROM`
+   - `NEXT_PUBLIC_APP_URL`
 4. Redeploy after updating env vars because API routes and Supabase clients read them at runtime.
 
 Implementation notes already applied in-repo:
@@ -46,3 +49,4 @@ Implementation notes already applied in-repo:
 - Node version is pinned to `20.x` in both workspace manifests.
 - Example env templates exist at `.env.example` and `app/.env.example`.
 - Supabase/env access now fails fast with clearer errors when required values are missing.
+- Email notifications are optional and activate only when `RESEND_API_KEY` and `EMAIL_FROM` are configured.

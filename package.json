@@ -13,5 +13,8 @@
     "dev": "npm run dev --workspace=app",
     "build": "npm run build --workspace=app",
     "start": "npm run start --workspace=app"
+  },
+  "dependencies": {
+    "framer-motion": "^12.38.0"
   }
 }

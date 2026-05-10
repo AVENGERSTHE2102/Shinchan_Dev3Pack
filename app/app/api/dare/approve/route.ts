@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { payoutDare } from '@/lib/payout';
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -18,28 +14,23 @@ export async function POST(request: Request) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const { error: dareError } = await supabaseAdmin
+    
+    // In the SOL version, the on-chain approve_dare instruction 
+    // already handles the payout. We just record the success in DB.
+    const { error } = await supabaseAdmin
       .from('dares')
       .update({
-        status: 'approved',
+        status: 'paid',
         recipient_wallet: recipient,
         onchain_tx_approve: approve_tx ?? null,
+        paid_at: new Date().toISOString(),
       })
       .eq('id', dare_id);
 
-    if (dareError) {
-      return NextResponse.json({ ok: false, error: dareError?.message || 'Dare not found' }, { status: 500 });
-    }
-
-    const result = await payoutDare({
-      dareId: dare_id,
-      recipient,
-      bountyLamports: Number(bounty_lamports),
-      approveTx: approve_tx,
-    });
+    if (error) throw error;
 
     return NextResponse.json(
-      { ok: true, payout_tx: result.payoutTx, cached: result.cached },
+      { ok: true, message: 'Dare approved and status updated to paid' },
       { status: 200 },
     );
   } catch (error) {

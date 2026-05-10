@@ -4,9 +4,9 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { dare_id, proof_url } = body ?? {};
+    const { dare_id, recipient_wallet, accept_tx } = body ?? {};
 
-    if (!dare_id || !proof_url) {
+    if (!dare_id || !recipient_wallet) {
       return NextResponse.json(
         { ok: false, error: 'Missing required fields' },
         { status: 400 },
@@ -17,8 +17,9 @@ export async function POST(request: Request) {
     const { error } = await supabaseAdmin
       .from('dares')
       .update({
-        status: 'proof_submitted',
-        proof_url,
+        status: 'accepted',
+        recipient_wallet,
+        onchain_tx_accept: accept_tx ?? null,
       })
       .eq('id', dare_id);
 

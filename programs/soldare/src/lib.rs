@@ -114,23 +114,19 @@ pub mod soldare {
         dare.status = DareStatus::Approved;
         dare.proof_hash = proof_hash;
 
-        // Emit the event Helius catches to trigger x402 USDC payout
+        // Emit the event Helius catches to sync status
         emit!(ApprovalEvent {
             dare_id: dare.dare_id.clone(),
             recipient: ctx.accounts.recipient.key(),
-            bounty_usdc_cents: (dare.bounty / 10_000) as u32,
+            bounty_lamports: dare.bounty,
             proof_hash,
         });
 
-        // Return the locked SOL to creator.
-        // The actual bounty payment is USDC via x402 — this SOL was collateral.
+        // Transfer the locked SOL bounty to the recipient.
+        // This is the actual on-chain payout — no treasury needed.
         let bounty = dare.bounty;
         **dare.to_account_info().try_borrow_mut_lamports()? -= bounty;
-        **ctx
-            .accounts
-            .creator
-            .to_account_info()
-            .try_borrow_mut_lamports()? += bounty;
+        **ctx.accounts.recipient.to_account_info().try_borrow_mut_lamports()? += bounty;
 
         Ok(())
     }
@@ -278,9 +274,9 @@ pub struct DareAccepted {
 
 #[event]
 pub struct ApprovalEvent {
-    pub dare_id: String,        // P3 uses this to query Supabase row
-    pub recipient: Pubkey,      // P3 sends USDC here
-    pub bounty_usdc_cents: u32, // P3 uses this as payment amount
+    pub dare_id: String,        // Helius uses this to sync Supabase
+    pub recipient: Pubkey,      // recipient of the SOL
+    pub bounty_lamports: u64,   // payment amount in lamports
     pub proof_hash: [u8; 32],   // audit trail
 }
 

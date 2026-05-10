@@ -1,23 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      id,
       creator_wallet,
       recipient_wallet,
-      dare_text,
+      title,
+      description,
       bounty_lamports,
       expires_at,
     } =
       body ?? {};
 
-    if (!creator_wallet || !dare_text || !bounty_lamports || !expires_at) {
+    if (!creator_wallet || !title || !bounty_lamports || !expires_at) {
       return NextResponse.json(
         { ok: false, error: 'Missing required fields' },
         { status: 400 },
@@ -28,10 +25,10 @@ export async function POST(request: Request) {
     const { data, error } = await supabaseAdmin
       .from('dares')
       .insert({
-        id,
         creator_wallet,
         recipient_wallet: recipient_wallet ?? null,
-        dare_text,
+        title,
+        description,
         bounty_lamports: Number(bounty_lamports),
         expires_at,
         status: 'created',
