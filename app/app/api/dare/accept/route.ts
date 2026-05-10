@@ -19,7 +19,6 @@ export async function POST(request: Request) {
       .update({
         status: 'accepted',
         recipient_wallet,
-        onchain_tx_accept: accept_tx ?? null,
       })
       .eq('id', dare_id);
 

@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import * as anchor from '@coral-xyz/anchor';
+import { Connection, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import idl from '@/idl/soldare.json';
 
-const getProgramServer = (connection: Connection) => {
-  const provider = new anchor.AnchorProvider(
-    connection,
-    {} as any,
-    { preflightCommitment: 'confirmed' }
-  );
-  const programId = new PublicKey(idl.address || "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA");
-  return new anchor.Program(idl as any, provider) as any;
-};
+const PROGRAM_ID = new PublicKey(idl.address || "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA");
 
 export async function POST(request: Request) {
   try {
@@ -22,17 +13,13 @@ export async function POST(request: Request) {
       throw new Error("Missing required fields");
     }
 
-    // FALLBACK: Use hardcoded Helius URL if environment variable is missing
-    const rpcUrl = process.env.HELIUS_RPC_URL || 
-                   process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 
-                   "https://devnet.helius-rpc.com/?api-key=69df4d37-a221-4849-b3a6-9546e2cf3ccb";
-
+    const rpcUrl = process.env.HELIUS_RPC_URL || process.env.NEXT_PUBLIC_HELIUS_RPC_URL || "https://devnet.helius-rpc.com/?api-key=69df4d37-a221-4849-b3a6-9546e2cf3ccb";
     const connection = new Connection(rpcUrl, 'confirmed');
-    const program = getProgramServer(connection);
     
     const creator = new PublicKey(creator_wallet);
     const recipient = new PublicKey(recipient_wallet);
     
+    // Healing dare_hash
     let dareHashArray: number[] = [];
     if (Array.isArray(dare_hash)) dareHashArray = dare_hash;
     else if (typeof dare_hash === 'object') {
@@ -45,16 +32,20 @@ export async function POST(request: Request) {
         creator.toBytes(),
         new Uint8Array(dareHashArray)
       ],
-      program.programId
+      PROGRAM_ID
     );
 
-    const instruction = await program.methods
-      .acceptDare()
-      .accounts({
-        dareAccount: darePDA,
-        recipient: recipient,
-      })
-      .instruction();
+    // Accept Dare Discriminator (sha256("global:accept_dare")[0..8])
+    const data = Buffer.from("ee7b48679fead253", "hex");
+
+    const instruction = new TransactionInstruction({
+      programId: PROGRAM_ID,
+      keys: [
+        { pubkey: darePDA, isSigner: false, isWritable: true },
+        { pubkey: recipient, isSigner: true, isWritable: false },
+      ],
+      data,
+    });
 
     const transaction = new Transaction().add(instruction);
     const { blockhash } = await connection.getLatestBlockhash();
@@ -67,7 +58,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ 
-      transaction: Buffer.from(serializedTransaction).toString('base64') 
+      transaction: serializedTransaction.toString('base64') 
     });
 
   } catch (error: any) {
