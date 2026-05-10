@@ -1,3 +1,4 @@
+import "@/lib/buffer-polyfill";
 import type { Metadata } from "next";
 import "./globals.css";
 import ClientProviders from "@/components/ClientProviders";
