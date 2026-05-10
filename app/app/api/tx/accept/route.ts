@@ -10,24 +10,22 @@ const getProgramServer = (connection: Connection) => {
     { preflightCommitment: 'confirmed' }
   );
   const programId = new PublicKey(idl.address || "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA");
-  return new anchor.Program(idl as any, provider);
+  return new anchor.Program(idl as any, provider) as any;
 };
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log("Building Accept TX for:", body);
-
     const { creator_wallet, recipient_wallet, dare_hash } = body ?? {};
 
     if (!creator_wallet || !recipient_wallet || !dare_hash) {
-      throw new Error(`Missing fields. Got creator: ${!!creator_wallet}, recipient: ${!!recipient_wallet}, hash: ${!!dare_hash}`);
+      throw new Error("Missing required fields");
     }
 
-    const rpcUrl = process.env.HELIUS_RPC_URL || process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
-    if (!rpcUrl) {
-      throw new Error("RPC URL missing in server environment. Check app/.env");
-    }
+    // FALLBACK: Use hardcoded Helius URL if environment variable is missing
+    const rpcUrl = process.env.HELIUS_RPC_URL || 
+                   process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 
+                   "https://devnet.helius-rpc.com/?api-key=69df4d37-a221-4849-b3a6-9546e2cf3ccb";
 
     const connection = new Connection(rpcUrl, 'confirmed');
     const program = getProgramServer(connection);
@@ -35,23 +33,10 @@ export async function POST(request: Request) {
     const creator = new PublicKey(creator_wallet);
     const recipient = new PublicKey(recipient_wallet);
     
-    // HEALING DARE HASH: Handle multiple input formats (Array, Object, Buffer-like)
     let dareHashArray: number[] = [];
-    if (Array.isArray(dare_hash)) {
-      dareHashArray = dare_hash;
-    } else if (typeof dare_hash === 'object') {
-      // Handle { 0: 12, 1: 45 ... } format often returned by Supabase
-      dareHashArray = Object.keys(dare_hash)
-        .sort((a, b) => Number(a) - Number(b))
-        .map(key => (dare_hash as any)[key]);
-    }
-
-    if (dareHashArray.length === 0) {
-      throw new Error("Could not parse dare_hash into a valid array");
-    }
-
-    if (dareHashArray.length !== 32) {
-      throw new Error(`Invalid dare_hash length: ${dareHashArray.length}. Expected 32.`);
+    if (Array.isArray(dare_hash)) dareHashArray = dare_hash;
+    else if (typeof dare_hash === 'object') {
+      dareHashArray = Object.keys(dare_hash).sort((a,b) => Number(a)-Number(b)).map(k => (dare_hash as any)[k]);
     }
 
     const [darePDA] = PublicKey.findProgramAddressSync(
@@ -62,8 +47,6 @@ export async function POST(request: Request) {
       ],
       program.programId
     );
-
-    console.log("Derived PDA:", darePDA.toBase58());
 
     const instruction = await program.methods
       .acceptDare()

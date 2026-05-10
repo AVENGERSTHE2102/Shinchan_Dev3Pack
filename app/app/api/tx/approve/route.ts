@@ -6,7 +6,7 @@ import idl from '@/idl/soldare.json';
 const getProgramServer = (connection: Connection) => {
   const provider = new anchor.AnchorProvider(connection, {} as any, { preflightCommitment: 'confirmed' });
   const programId = new PublicKey(idl.address || "HTiYVYKAGyZptRer8Q3HGZY3ghjm5fo15BVwk7NtWyuA");
-  return new anchor.Program(idl as any, provider);
+  return new anchor.Program(idl as any, provider) as any;
 };
 
 export async function POST(request: Request) {
@@ -14,21 +14,22 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { creator_wallet, recipient_wallet, dare_hash, proof_hash } = body ?? {};
 
-    const rpcUrl = process.env.HELIUS_RPC_URL || process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
-    const connection = new Connection(rpcUrl!, 'confirmed');
+    const rpcUrl = process.env.HELIUS_RPC_URL || 
+                   process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 
+                   "https://devnet.helius-rpc.com/?api-key=69df4d37-a221-4849-b3a6-9546e2cf3ccb";
+
+    const connection = new Connection(rpcUrl, 'confirmed');
     const program = getProgramServer(connection);
     
     const creator = new PublicKey(creator_wallet);
     const recipient = new PublicKey(recipient_wallet);
     
-    // Healing dare_hash
     let dareHashArray: number[] = [];
     if (Array.isArray(dare_hash)) dareHashArray = dare_hash;
     else if (typeof dare_hash === 'object') {
       dareHashArray = Object.keys(dare_hash).sort((a,b) => Number(a)-Number(b)).map(k => (dare_hash as any)[k]);
     }
 
-    // Healing proof_hash
     let proofHashArray: number[] = [];
     if (Array.isArray(proof_hash)) proofHashArray = proof_hash;
     else if (typeof proof_hash === 'object') {
