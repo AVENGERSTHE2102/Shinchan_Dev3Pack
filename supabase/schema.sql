@@ -7,7 +7,7 @@ create table if not exists public.dares (
     creator_wallet text not null,
     recipient_wallet text,
     dare_text text not null,
-    bounty_usdc_cents integer not null check (bounty_usdc_cents > 0),
+    bounty_lamports bigint not null check (bounty_lamports > 0),
     expires_at timestamptz not null,
     status text not null default 'created' check (status in ('created', 'accepted', 'proof_submitted', 'approved', 'paid', 'expired', 'reclaimed')),
     proof_url text,
