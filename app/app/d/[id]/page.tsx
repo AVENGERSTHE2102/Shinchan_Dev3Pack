@@ -60,12 +60,31 @@ export default function DarePage({ params }: { params: { id: string } }) {
   const isCreator = publicKey?.toBase58() === dare.creator_wallet;
   const isRecipient = publicKey?.toBase58() === dare.recipient_wallet;
   const hasExpired = new Date(dare.expires_at) < new Date();
+  
+  // Extract dare hash from metadata
+  const dareHash = dare.metadata?.dare_hash;
 
   const handleAccept = async () => {
+    if (!dareHash) {
+      error("Data error", "Dare hash missing from record.");
+      return;
+    }
     const tid = loadingToast("Signing transaction...", "Please confirm in your wallet.");
     setLoading(true);
     try {
-      const tx = await acceptDare(dare.id);
+      const tx = await acceptDare(dare.creator_wallet, dareHash);
+      
+      // Update DB
+      await fetch("/api/dare/accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dare_id: dare.id,
+          recipient_wallet: publicKey?.toBase58(),
+          accept_tx: tx,
+        }),
+      });
+
       success("Dare accepted! ⚡", "You are now the challenger. Good luck!");
     } catch (err: any) {
       error("Action failed", err.message);
@@ -76,12 +95,16 @@ export default function DarePage({ params }: { params: { id: string } }) {
   };
 
   const handleApprove = async () => {
+    if (!dareHash) {
+      error("Data error", "Dare hash missing from record.");
+      return;
+    }
     const tid = loadingToast("Approving payout...", "This will release the SOL bounty.");
     setLoading(true);
     try {
       // Create a dummy proof hash for now
       const dummyProofHash = Array(32).fill(0);
-      const tx = await approveDare(dare.id, dare.recipient_wallet, dummyProofHash);
+      const tx = await approveDare(dare.creator_wallet, dareHash, dare.recipient_wallet, dummyProofHash);
       
       // Update DB status to paid
       await fetch("/api/dare/approve", {
@@ -108,6 +131,10 @@ export default function DarePage({ params }: { params: { id: string } }) {
     await navigator.clipboard.writeText(window.location.href);
     success("Link copied!", "Share this dare with others.");
   };
+
+  // Helper to get title/description from metadata or fallback to dare_text
+  const title = dare.metadata?.title || dare.dare_text?.split('\n')[0] || "Challenge";
+  const description = dare.metadata?.description || dare.dare_text?.split('\n').slice(1).join('\n') || dare.dare_text;
 
   return (
     <main className="min-h-screen bg-[#050505] text-white py-8 px-4 sm:py-12 sm:px-6">
@@ -155,12 +182,12 @@ export default function DarePage({ params }: { params: { id: string } }) {
 
             {/* Title */}
             <h1 className="text-3xl font-black leading-tight sm:text-5xl mb-6">
-              {dare.title}
+              {title}
             </h1>
 
             {/* Description */}
             <p className="text-zinc-400 text-lg leading-relaxed mb-10">
-              {dare.description}
+              {description}
             </p>
 
             {/* Meta Info */}

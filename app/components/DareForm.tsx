@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSolDare } from "@/hooks/useSolDare";
 import { useToast } from "@/components/Toast";
-import { solToLamports } from "@/lib/utils";
+import { solToLamports, computeDareHash } from "@/lib/utils";
 import { Coins, Calendar, User, FileText, Zap } from "lucide-react";
 
 export default function DareForm() {
@@ -34,6 +34,9 @@ export default function DareForm() {
     try {
       const bountyLamports = solToLamports(Number(formData.reward));
       
+      // Compute dare hash for PDA derivation
+      const dareHash = await computeDareHash(formData.title + "\n" + formData.description);
+      
       // 1. Create entry in Supabase to get UUID
       const res = await fetch("/api/dare/create", {
         method: "POST",
@@ -45,6 +48,7 @@ export default function DareForm() {
           description: formData.description,
           bounty_lamports: bountyLamports,
           expires_at: new Date(formData.expiry).toISOString(),
+          dare_hash: dareHash,
         }),
       });
 
@@ -54,9 +58,7 @@ export default function DareForm() {
       const dareId = dbData.id;
       
       // 2. On-chain transaction
-      // For the dareHash, we'll use a dummy for now or hash the title
-      const dummyHash = Array(32).fill(0);
-      await createDare(dareId, bountyLamports, dummyHash);
+      await createDare(dareId, bountyLamports, dareHash);
 
       success("Dare Created! ⚡", "Your challenge is live and bounty is escrowed.");
       
@@ -143,21 +145,6 @@ export default function DareForm() {
         </div>
       </div>
 
-      {/* Recipient (Optional) */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Target Recipient (Optional)</label>
-        <div className="relative">
-          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
-          <input
-            type="text"
-            placeholder="Wallet Address (leave blank for public dare)"
-            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white font-mono text-sm focus:border-cyan-500/50 focus:ring-0 transition"
-            value={formData.recipient}
-            onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
-          />
-        </div>
-      </div>
-
       <button
         type="submit"
         disabled={loading}
@@ -165,12 +152,6 @@ export default function DareForm() {
       >
         {loading ? "PROCESSING..." : "LAUNCH DARE 🚀"}
       </button>
-
-      {!publicKey && (
-        <p className="text-center text-xs text-red-400 font-bold animate-pulse">
-          Connect your wallet to launch the dare!
-        </p>
-      )}
     </form>
   );
 }

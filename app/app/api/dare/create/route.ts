@@ -11,10 +11,11 @@ export async function POST(request: Request) {
       description,
       bounty_lamports,
       expires_at,
+      dare_hash,
     } =
       body ?? {};
 
-    if (!creator_wallet || !title || !bounty_lamports || !expires_at) {
+    if (!creator_wallet || !title || !bounty_lamports || !expires_at || !dare_hash) {
       return NextResponse.json(
         { ok: false, error: 'Missing required fields' },
         { status: 400 },
@@ -27,11 +28,11 @@ export async function POST(request: Request) {
       .insert({
         creator_wallet,
         recipient_wallet: recipient_wallet ?? null,
-        title,
-        description,
+        dare_text: title + "\n" + description, // Combine for backward compatibility if needed
         bounty_lamports: Number(bounty_lamports),
         expires_at,
         status: 'created',
+        metadata: { title, description, dare_hash }, // Store hash in metadata for now if column missing
       })
       .select('id,status')
       .single();

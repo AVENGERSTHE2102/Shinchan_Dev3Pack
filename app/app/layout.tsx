@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import "./globals.css";
-import { ToastProvider } from "@/components/Toast";
-import Navbar from "@/components/Navbar";
-
-const WalletProvider = dynamic(
-  () => import("@/components/WalletProvider"),
-  {
-    ssr: false,
-  }
-);
+import ClientProviders from "@/components/ClientProviders";
 
 export const metadata: Metadata = {
   title: "SolDare | Social Challenges on Solana",
@@ -24,12 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className="antialiased selection:bg-cyan-500/30">
-        <ToastProvider>
-          <WalletProvider>
-            <Navbar />
-            {children}
-          </WalletProvider>
-        </ToastProvider>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );
